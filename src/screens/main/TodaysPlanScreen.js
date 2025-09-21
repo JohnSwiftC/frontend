@@ -403,13 +403,6 @@ export default function TodaysPlanScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-        stickyHeaderIndices={[1]}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-        }
-      >
         <View style={styles.header}>
           <Text style={styles.greeting}>Meal Plan</Text>
         </View>
@@ -461,6 +454,12 @@ export default function TodaysPlanScreen() {
           </View>
         </View>
 
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          }
+        >
         <View style={styles.contentContainer}>
           {/* Current content (animated) */}
           <Animated.View style={[styles.contentView, { transform: [{ translateX: slideX }] }]}>
