@@ -34,48 +34,53 @@ function RootWrapper() {
 
 	// simple macro calculator from onboarding data
 	function calculateMacros(onboard) {
-		// expected keys (try to be flexible): weightKg, heightCm, age, sex, activity, goal, calories
-		const weight = Number(onboard?.weightKg ?? onboard?.weight ?? 70);
-		const height = Number(onboard?.heightCm ?? onboard?.height ?? 175);
+		const weight = Number(onboard?.weight ?? 70);
+		const height = Number(onboard?.height ?? 175);
 		const age = Number(onboard?.age ?? 30);
 		const sex = (onboard?.sex ?? 'male').toLowerCase();
-		const activity = (onboard?.activity ?? 'moderate').toLowerCase();
-		const goal = (onboard?.goal ?? 'maintain').toLowerCase();
-
-		// BMR (Mifflin-St Jeor)
-		let bmr = 10 * weight + 6.25 * height - 5 * age + (sex === 'male' ? 5 : -161);
-		// activity multiplier
+		
+		// Map activity level IDs to multipliers
+		const activityLevel = onboard?.activityLevel || 'moderately_active';
 		const activityMap = {
-			sedentary: 1.2,
-			light: 1.375,
-			moderate: 1.55,
-			active: 1.725,
-			very_active: 1.9,
+			'sedentary': 1.2,
+			'lightly_active': 1.375,
+			'moderately_active': 1.55,
+			'very_active': 1.725,
+			'extra_active': 1.9
 		};
-		const activityFactor = activityMap[activity] ?? 1.55;
+		const activityFactor = activityMap[activityLevel] || 1.55;
+		
+		// Map goal IDs properly
+		const goalMap = {
+			'loseWeight': 'lose',
+			'maintain': 'maintain',
+			'gainMuscle': 'gain'
+		};
+		const goal = goalMap[onboard?.goal?.id] || goalMap[onboard?.goal] || 'maintain';
+		
+		// Calculate BMR
+		let bmr = 10 * weight + 6.25 * height - 5 * age + (sex === 'male' ? 5 : -161);
 		let calories = Math.round(bmr * activityFactor);
-
-		// goal adjustment
-		if (goal === 'lose' || goal === 'cut') calories = Math.round(calories * 0.8);
-		else if (goal === 'gain' || goal === 'bulk') calories = Math.round(calories * 1.15);
-
-		// Protein: 1.6 g per kg
+		
+		// Adjust for goal
+		if (goal === 'lose') calories = Math.round(calories * 0.85);
+		else if (goal === 'gain') calories = Math.round(calories * 1.15);
+		
+		// Calculate macros
 		const proteinGrams = Math.round(1.6 * weight);
 		const proteinCalories = proteinGrams * 4;
-
-		// Fat: 25% of calories
+		
 		const fatCalories = Math.round(calories * 0.25);
 		const fatGrams = Math.round(fatCalories / 9);
-
-		// Carbs: remaining calories
+		
 		const carbsCalories = Math.max(0, calories - proteinCalories - fatCalories);
 		const carbsGrams = Math.round(carbsCalories / 4);
-
+		
 		return {
 			protein: proteinGrams,
 			fat: fatGrams,
 			carbs: carbsGrams,
-			cals: calories,
+			cals: calories
 		};
 	}
 

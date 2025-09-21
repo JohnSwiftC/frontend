@@ -39,7 +39,7 @@ export default function TodaysPlanScreen() {
     }, [currentDate])
   );
 
-  const formatDateKey = async (dateObj) => {
+  const formatDateKey = (dateObj) => {
     const y = dateObj.getFullYear();
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
     const d = String(dateObj.getDate()).padStart(2, '0');
@@ -51,13 +51,83 @@ export default function TodaysPlanScreen() {
       const profile = await storage.getUserProfile();
       if (profile) {
         setUserProfile(profile);
-        let plan = await generateMealPlan(profile);
-        plan.totalNutrition = calculateTotalNutrition(plan.meals);
+        
+        // Generate meal plan with error handling
+        let plan;
+        try {
+          plan = await generateMealPlan(profile);
+        } catch (planError) {
+          console.warn('Error generating meal plan, using defaults:', planError);
+          // Create a basic plan structure if generation fails
+          plan = {
+            meals: {
+              breakfast: { 
+                id: 'default-b', 
+                name: 'Breakfast', 
+                calories: 350,
+                protein: 20,
+                carbs: 45,
+                fat: 12
+              },
+              lunch: { 
+                id: 'default-l', 
+                name: 'Lunch', 
+                calories: 450,
+                protein: 30,
+                carbs: 50,
+                fat: 15
+              },
+              dinner: { 
+                id: 'default-d', 
+                name: 'Dinner', 
+                calories: 500,
+                protein: 35,
+                carbs: 55,
+                fat: 18
+              }
+            },
+            totalNutrition: { calories: 1300, protein: 85, carbs: 150, fat: 45 },
+            targets: {
+              targetCalories: 2000,
+              targetProtein: 100,
+              targetCarbs: 250,
+              targetFat: 65
+            }
+          };
+        }
+        
+        // Ensure plan has required structure
+        if (!plan.meals) {
+          plan.meals = {
+            breakfast: null,
+            lunch: null,
+            dinner: null
+          };
+        }
+        
+        // Calculate total nutrition if not present
+        if (!plan.totalNutrition) {
+          plan.totalNutrition = calculateTotalNutrition(plan.meals);
+        }
+        
         const key = formatDateKey(dateObj);
         setPlansByDate(prev => ({ ...prev, [key]: plan }));
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+      // Set empty plan to prevent crashes
+      const key = formatDateKey(dateObj);
+      setPlansByDate(prev => ({ 
+        ...prev, 
+        [key]: {
+          meals: {
+            breakfast: null,
+            lunch: null,
+            dinner: null
+          },
+          totalNutrition: { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        }
+      }));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -69,10 +139,11 @@ export default function TodaysPlanScreen() {
     try {
       const key = formatDateKey(currentDate);
       const currentPlan = plansByDate[key];
-      if (!currentPlan) return;
+      if (!currentPlan || !currentPlan.meals) return;
+      
       const currentMeal = currentPlan.meals[mealType];
-      const newMeal = generateAlternativeMeal(currentMeal, userProfile, mealType);
-
+      const newMeal = await generateAlternativeMeal(currentMeal, userProfile, mealType);
+  
       const updatedMealPlan = {
         ...currentPlan,
         meals: {
@@ -80,9 +151,8 @@ export default function TodaysPlanScreen() {
           [mealType]: newMeal,
         },
       };
-      const totalNutrition = calculateTotalNutrition(Object.values(updatedMealPlan.meals));
-      updatedMealPlan.totalNutrition = totalNutrition;
-      console.log("True");
+      
+      updatedMealPlan.totalNutrition = calculateTotalNutrition(updatedMealPlan.meals);
       setPlansByDate(prev => ({ ...prev, [key]: updatedMealPlan }));
     } catch (error) {
       console.error('Error swapping meal:', error);
