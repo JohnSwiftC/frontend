@@ -126,7 +126,8 @@ const OnboardingNavigator = ({ onComplete }) => {
   const isLoading = currentStageIndex === contentCount + 1;
   const isPlanReady = currentStageIndex >= contentCount + 2;
 
-  const isContinueDisabled = Current === WelcomeScreen && !onboardingData.goal;
+  const isContinueDisabled = (Current === WelcomeScreen && !onboardingData.goal) || 
+                            (Current === ActivityLevelScreen && !onboardingData.activityLevel);
 
   // Progress (show full during loading and ready)
   const currentForProgress = introVisible

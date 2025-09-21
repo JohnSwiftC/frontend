@@ -6,51 +6,96 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { useOnboarding } from '../../context/OnboardingContext';
-import { Colors } from '../../constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useOnboarding } from '../../context/OnboardingContext';
+
+import { Colors } from '../../constants/Colors';
 
 const activityLevels = [
-  { id: 'sedentary', title: 'Sedentary', description: 'Little or no exercise' },
-  { id: 'lightly_active', title: 'Lightly Active', description: 'Light exercise/sports 1-3 days/week' },
-  { id: 'moderately_active', title: 'Moderately Active', description: 'Moderate exercise/sports 3-5 days/week' },
-  { id: 'very_active', title: 'Very Active', description: 'Hard exercise/sports 6-7 days a week' },
-  { id: 'extra_active', title: 'Extra Active', description: 'Very hard exercise/sports & physical job' },
+  { 
+    id: 'sedentary', 
+    title: 'Sedentary', 
+    description: 'Little to no exercise',
+    icon: '🛋️',
+    color: Colors.textSecondary
+  },
+  { 
+    id: 'lightly_active', 
+    title: 'Lightly Active', 
+    description: 'Light exercise 1-3 days/week',
+    icon: '🚶',
+    color: Colors.primary
+  },
+  { 
+    id: 'moderately_active', 
+    title: 'Moderately Active', 
+    description: 'Moderate exercise 3-5 days/week',
+    icon: '🏃',
+    color: Colors.primary
+  },
+  { 
+    id: 'very_active', 
+    title: 'Very Active', 
+    description: 'Heavy exercise 6-7 days/week',
+    icon: '💪',
+    color: Colors.primary
+  },
+  { 
+    id: 'extra_active', 
+    title: 'Extra Active', 
+    description: 'Very heavy exercise, physical job',
+    icon: '🔥',
+    color: Colors.warning
+  },
 ];
 
 export default function ActivityLevelScreen() {
   const { onboardingData, updateOnboardingData } = useOnboarding();
-  const [selectedLevel, setSelectedLevel] = useState(onboardingData.activityLevel);
+  const [selectedActivityLevel, setSelectedActivityLevel] = useState(onboardingData.activityLevel);
 
   useEffect(() => {
-    updateOnboardingData({ activityLevel: selectedLevel });
-  }, [selectedLevel]);
+    updateOnboardingData({ activityLevel: selectedActivityLevel });
+  }, [selectedActivityLevel]);
+
+  const renderActivityCard = (activity) => (
+    <TouchableOpacity
+      key={activity.id}
+      style={[
+        styles.activityCard,
+        selectedActivityLevel === activity.id && styles.selectedActivityCard
+      ]}
+      onPress={() => setSelectedActivityLevel(activity.id)}
+      activeOpacity={0.7}
+    >
+      <LinearGradient
+        colors={selectedActivityLevel === activity.id ? [activity.color + '20', activity.color + '20'] : ['#F5F5F5', '#F5F5F5']}
+        style={styles.activityCardGradient}
+      >
+        <View style={styles.activityIconContainer}>
+          <Text style={styles.activityIcon}>{activity.icon}</Text>
+        </View>
+        <View style={styles.activityContent}>
+          <Text style={styles.activityTitle}>{activity.title}</Text>
+          <Text style={styles.activityDescription}>{activity.description}</Text>
+        </View>
+        {selectedActivityLevel === activity.id && (
+          <View style={[styles.checkmarkContainer, { backgroundColor: activity.color }]}>
+            <Ionicons name="checkmark" size={16} color={Colors.textLight} />
+          </View>
+        )}
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <View style={styles.content}>
-        <Text style={styles.title}>Your Activity Level</Text>
-        <Text style={styles.subtitle}>How active are you on a weekly basis?</Text>
+        <Text style={styles.title}>Activity Level</Text>
+        <Text style={styles.subtitle}>How active are you on a typical day?</Text>
 
-        <View style={styles.optionsContainer}>
-          {activityLevels.map((level) => (
-            <TouchableOpacity
-              key={level.id}
-              style={[styles.optionCard, selectedLevel === level.id && styles.selectedOptionCard]}
-              onPress={() => setSelectedLevel(level.id)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionTextContainer}>
-                <Text style={[styles.optionTitle, selectedLevel === level.id && styles.selectedOptionText]}>{level.title}</Text>
-                <Text style={[styles.optionDescription, selectedLevel === level.id && styles.selectedOptionText]}>{level.description}</Text>
-              </View>
-              {selectedLevel === level.id && (
-                <View style={styles.checkIcon}>
-                  <Ionicons name="checkmark-circle" size={24} color={Colors.primary} />
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
+        <View style={styles.activitiesContainer}>
+          {activityLevels.map(renderActivityCard)}
         </View>
       </View>
     </ScrollView>
@@ -65,7 +110,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: 20,
+    paddingTop: 40,
   },
   title: {
     fontSize: 28,
@@ -76,43 +121,64 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: Colors.textSecondary,
+    marginBottom: 32,
     lineHeight: 24,
-    marginBottom: 24,
   },
-  optionsContainer: {
+  activitiesContainer: {
     flex: 1,
   },
-  optionCard: {
+  activityCard: {
+    marginBottom: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    backgroundColor: 'transparent',
+  },
+  selectedActivityCard: {
+    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+  },
+  activityCardGradient: {
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: 'transparent',
   },
-  selectedOptionCard: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
+  activityIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  optionTextContainer: {
+  activityIcon: {
+    fontSize: 20,
+  },
+  activityContent: {
     flex: 1,
   },
-  optionTitle: {
-    fontSize: 18,
+  activityTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text,
+    marginBottom: 2,
   },
-  optionDescription: {
-    fontSize: 14,
+  activityDescription: {
+    fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 4,
+    lineHeight: 18,
   },
-  selectedOptionText: {
-    color: Colors.primary,
-  },
-  checkIcon: {
-    marginLeft: 16,
+  checkmarkContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
