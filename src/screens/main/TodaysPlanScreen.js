@@ -165,11 +165,12 @@ export default function TodaysPlanScreen() {
     // Accept either an array of meal objects, or an object with arrays:
     // { breakfast: [...], lunch: [...], dinner: [...] }
     let items = [];
-
+    
     if (!meals) {
       return { calories: 0, protein: 0, carbs: 0, fat: 0 };
     }
-
+    
+    console.log(meals)
     // If meals is an array (old format), use it directly
     if (Array.isArray(meals)) {
       items = meals;

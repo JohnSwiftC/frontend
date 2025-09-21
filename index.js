@@ -6,6 +6,22 @@ import { storage } from './src/utils/AsyncStorage';
 
 import App from './App';
 
+const API_BASE = 'https://backend-production-28e8.up.railway.app'; // <- backend base URL
+
+export async function sendUserMacros(macros) {
+	try {
+		console.log("Sending macros", macros);
+		const res = await fetch(`${API_BASE}/update_user_macs`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(macros),
+		});
+		console.log(res.json())
+	} catch (err) {
+		console.warn('failed to send macros', err);
+	}
+}
 // new: wrapper that ensures /register is called when onboarding is not complete,
 // and that computes + sends macros to /update_user_macs after onboarding completes.
 function RootWrapper() {

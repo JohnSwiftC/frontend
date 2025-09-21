@@ -13,6 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { computeNutritionTargets } from '../../utils/MealPlanner'
 
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';
@@ -59,6 +60,9 @@ export default function PlanReadyScreen({ onComplete }) {
       
       // Save onboarding data
       await storage.saveOnboardingData(onboardingData);
+      const macros = computeNutritionTargets(onboardingData);
+      await sendUserMacros({cals:macros.targetCalories, protein:macros.targetProtein, carbs:macros.targetCarbs, fat:macros.targetFat});
+
 
       // For now, create a mock meal plan since the backend might not be connected
       // This ensures the app doesn't crash

@@ -7,7 +7,9 @@ export const generateMealPlan = async (userProfile = {}, excludedItems = []) => 
   const { goal, allergies = [], dietaryPreferences = [] } = userProfile;
 
   // Get target nutrition from profile goals
-  const targets = mockUserProfiles[goal] || mockUserProfiles.maintain;
+  const onboardingData = (await storage.getOnboardingData()) || {};
+  const targets = computeNutritionTargets(onboardingData);
+
 
   // Safely fetch recommendations
   let recommendations;
@@ -180,4 +182,97 @@ export const searchMeals = (query, filters = {}) => {
   }
   
   return results;
+};
+const getActivityMultiplier = (activityLevelId) => {
+  switch (activityLevelId) {
+    case 'sedentary':
+      return 1.2;
+    case 'lightly_active':
+      return 1.375;
+    case 'moderately_active':
+      return 1.55;
+    case 'very_active':
+      return 1.725;
+    case 'extra_active':
+      return 1.9;
+    default:
+      return 1.2;
+  }
+};
+export const computeNutritionTargets = (profile) => {
+  const {
+    sex,
+    age,
+    height,
+    weight,
+    activityLevel,
+    goal,
+    unitSystem,
+  } = profile;
+
+  const safeAge = typeof age === 'number' ? age : 25;
+  let safeHeightCm = typeof height === 'number' ? height : 175;
+  let safeWeightKg = typeof weight === 'number' ? weight : 70;
+
+  // Normalize to metric if profile stored as imperial
+  if (unitSystem === 'imperial') {
+    // height provided as centimeters already from PhysicalProfileScreen storage; if not, fallback assumes inches total
+    if (safeHeightCm < 100) {
+      // likely inches, convert to cm
+      safeHeightCm = Math.round(safeHeightCm * 2.54);
+    }
+    if (safeWeightKg > 140) {
+      // likely pounds, convert to kg
+      safeWeightKg = Math.round(safeWeightKg / 2.20462);
+    }
+  }
+
+  const isMale = String(sex || '').toLowerCase().startsWith('m');
+
+  const bmr = isMale
+    ? 10 * safeWeightKg + 6.25 * safeHeightCm - 5 * safeAge + 5
+    : 10 * safeWeightKg + 6.25 * safeHeightCm - 5 * safeAge - 161;
+
+  const multiplier = getActivityMultiplier(activityLevel);
+  const tdee = bmr * multiplier;
+
+  let targetCalories = tdee;
+  switch (goal) {
+    case 'loseWeight':
+      targetCalories = tdee * 0.8;
+      break;
+    case 'gainMuscle':
+      targetCalories = tdee * 1.15;
+      break;
+    case 'maintain':
+    default:
+      targetCalories = tdee * 1.0;
+      break;
+  }
+
+  let proteinPct = 0.3;
+  let carbsPct = 0.4;
+  let fatPct = 0.3;
+
+  if (goal === 'loseWeight') {
+    proteinPct = 0.4;
+    carbsPct = 0.3;
+    fatPct = 0.3;
+  } else if (goal === 'gainMuscle') {
+    proteinPct = 0.3;
+    carbsPct = 0.45;
+    fatPct = 0.25;
+  }
+
+  const caloriesRounded = Math.round(targetCalories);
+  const targetProtein = Math.round((caloriesRounded * proteinPct) / 4);
+  const targetCarbs = Math.round((caloriesRounded * carbsPct) / 4);
+  const targetFat = Math.round((caloriesRounded * fatPct) / 9);
+
+  return {
+    targetCalories: caloriesRounded,
+    targetProtein,
+    targetCarbs,
+    targetFat,
+  };
 };
