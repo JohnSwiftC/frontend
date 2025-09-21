@@ -24,7 +24,7 @@ export const generateMealPlan = (userProfile, excludedItems = []) => {
     
     return true;
   });
-  
+  console.log('Available Items:', availableItems);
   // Group by meal category
   const breakfastItems = availableItems.filter(item => item.category === 'breakfast');
   const lunchItems = availableItems.filter(item => item.category === 'lunch');

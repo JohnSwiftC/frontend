@@ -59,6 +59,33 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
     );
   };
 
+  // helper: return icon name for each meal type
+  const iconNameForMeal = (mealType) => {
+    switch (mealType) {
+      case 'breakfast': return 'sunny-outline';
+      case 'lunch': return 'fast-food-outline';
+      case 'dinner': return 'moon-outline';
+      default: return 'ellipse-outline';
+    }
+  };
+
+  // render a meal row with a left timeline column (vertical line + circle) and the meal content to the right
+  const renderMealRow = (mealType, meal) => {
+    return (
+      <View key={mealType} style={styles.mealRow}>
+        <View style={styles.timelineColumn}>
+          <View style={styles.timelineLine} />
+          <View style={styles.timelineCircle}>
+            <Ionicons name={iconNameForMeal(mealType)} size={16} color={Colors.primary} />
+          </View>
+        </View>
+        <View style={styles.mealContent}>
+          <MealCard mealType={mealType} meal={meal} onSwapMeal={onSwapMeal} swappingMeal={swappingMeal} getDiningCourtInfo={getDiningCourtInfo} />
+        </View>
+      </View>
+    );
+  };
+
   if (!plan) {
     return (
       <View style={styles.noDataContainer}>
@@ -93,9 +120,9 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
       {/* modern nutrition summary (no "Daily Nutrition" title) */}
       {renderNutritionSummary()}
       <View style={styles.mealsContainer}>
-        <MealCard mealType="breakfast" meal={plan.meals.breakfast} onSwapMeal={onSwapMeal} swappingMeal={swappingMeal} getDiningCourtInfo={getDiningCourtInfo} />
-        <MealCard mealType="lunch" meal={plan.meals.lunch} onSwapMeal={onSwapMeal} swappingMeal={swappingMeal} getDiningCourtInfo={getDiningCourtInfo} />
-        <MealCard mealType="dinner" meal={plan.meals.dinner} onSwapMeal={onSwapMeal} swappingMeal={swappingMeal} getDiningCourtInfo={getDiningCourtInfo} />
+        {renderMealRow('breakfast', plan.meals.breakfast)}
+        {renderMealRow('lunch', plan.meals.lunch)}
+        {renderMealRow('dinner', plan.meals.dinner)}
       </View>
       <TouchableOpacity
         style={styles.regenerateButton}
@@ -168,6 +195,46 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
+  // new meal row + timeline styles
+  mealRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    marginVertical: 8,
+  },
+  timelineColumn: {
+    width: 56,                 // space reserved for line + circle
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    position: 'relative',
+  },
+  timelineLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '50%',
+    width: 2,
+    backgroundColor: Colors.border,
+    transform: [{ translateX: -1 }],
+  },
+  timelineCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    zIndex: 2,
+    // center the circle horizontally on the timeline line
+    position: 'relative',
+    marginTop: 8,
+  },
+  mealContent: {
+    flex: 1,
+    paddingLeft: 6, // small gap between timeline column and meal content
+  },
+
   // modern nutrition styles (boxes removed; numbers emphasized)
   nutritionRow: {
     flexDirection: 'row',
@@ -227,5 +294,11 @@ const styles = StyleSheet.create({
     marginTop: 0,
     textAlign: 'center',
     alignSelf: 'center',
+    backgroundColor: Colors.cardBackground,
+    width: '100%',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: Colors.border,
+    
   },
 });

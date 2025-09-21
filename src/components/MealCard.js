@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,80 +12,78 @@ export default function MealCard({ mealType, meal, onSwapMeal, swappingMeal, get
 
   if (!meal) {
     return (
-      <View key={mealType} style={styles.mealCard}>
-        <View style={styles.mealCardContent}>
+      <>
+      <View style={styles.mealHeader}>
+        <View style={styles.mealTypeContainer}>
           <Text style={styles.mealTypeTitle}>{mealType.charAt(0).toUpperCase() + mealType.slice(1)}</Text>
-          <Text style={styles.noMealText}>No suitable meal found</Text>
         </View>
-      </View>
+        </View>
+        <View style={styles.mealContent}>
+          <Text>No meals found</Text>
+
+        </View>
+      </>
     );
   }
 
   const diningCourt = getDiningCourtInfo(meal.diningCourt);
 
   return (
-    <View key={mealType} style={styles.mealCard}>
-      <LinearGradient
-        colors={[color + '15', Colors.surface]}
-        style={styles.mealCardGradient}
-      >
-        <View style={styles.mealHeader}>
-          <View style={styles.mealTypeContainer}>
-            <View style={[styles.mealIcon, { backgroundColor: color + '20' }]}>
-              <Ionicons name={icon} size={24} color={color} />
-            </View>
-            <View style={styles.mealHeaderText}>
-              <Text style={styles.mealTypeTitle}>
-                {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-              </Text>
-              <Text style={styles.diningCourtName}>{diningCourt.name}</Text>
-            </View>
+    <>
+      <View style={styles.mealHeader}>
+        <View style={styles.mealTypeContainer}>
+          {/* <View style={[styles.mealIcon, { backgroundColor: color + '20' }]}>
+            <Ionicons name={icon} size={24} color={color} />
+          </View> */}
+          <View style={styles.mealHeaderText}>
+            <Text style={styles.mealTypeTitle}>
+              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+            </Text>
+            <Text style={styles.spacer}> • </Text>
+            <Text style={styles.diningCourtName}>{diningCourt.name}</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.swapButton, { backgroundColor: color }]}
-            onPress={() => onSwapMeal(mealType)}
-            disabled={isSwapping}
-            activeOpacity={0.7}
-          >
-            {isSwapping ? (
-              <ActivityIndicator size="small" color={Colors.textLight} />
-            ) : (
-              <Ionicons name="refresh" size={20} color={Colors.textLight} />
-            )}
-          </TouchableOpacity>
         </View>
-        
-        <View style={styles.mealContent}>
-          <Text style={styles.mealName}>{meal.name}</Text>
-          <Text style={styles.diningCourtLocation}>{diningCourt.location}</Text>
-          
-          <View style={styles.nutritionRow}>
-            <View style={styles.nutritionBadge}>
-              <Text style={styles.nutritionBadgeText}>{meal.calories} cal</Text>
-            </View>
-            <View style={styles.nutritionBadge}>
-              <Text style={styles.nutritionBadgeText}>{meal.protein}g protein</Text>
-            </View>
-            <View style={styles.nutritionBadge}>
-              <Text style={styles.nutritionBadgeText}>{meal.carbs}g carbs</Text>
-            </View>
-            <View style={styles.nutritionBadge}>
-              <Text style={styles.nutritionBadgeText}>{meal.fat}g fat</Text>
-            </View>
-          </View>
-
-          {meal.dietary && meal.dietary.length > 0 && (
-            <View style={styles.dietaryInfo}>
-              {meal.dietary.map(diet => (
-                <View key={diet} style={[styles.dietaryBadge, { backgroundColor: Colors.success + '20' }]}>
-                  <Text style={[styles.dietaryText, { color: Colors.success }]}>{diet}</Text>
-                </View>
-              ))}
-            </View>
+        {/* <TouchableOpacity
+          style={[styles.swapButton, { backgroundColor: color }]}
+          onPress={() => onSwapMeal(mealType)}
+          disabled={isSwapping}
+          activeOpacity={0.7}
+        >
+          {isSwapping ? (
+            <ActivityIndicator size="small" color={Colors.textLight} />
+          ) : (
+            <Ionicons name="refresh" size={20} color={Colors.textLight} />
           )}
+        </TouchableOpacity> */}
+      </View>
+      
+      <View style={styles.mealContent}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+          <Text style={{marginLeft: -30, fontSize: 13, color: Colors.textSecondary}}>⬤</Text><Text style={styles.mealName}>{meal.name}</Text>
         </View>
-      </LinearGradient>
-    </View>
+        {/* <Text style={styles.diningCourtLocation}>{diningCourt.location}</Text> */}
+        
+        <View style={styles.nutritionRow}>
+          <Text style={styles.nutritionBadgeText}>{meal.calories} cal</Text>
+          <Text style={styles.spacer}> • </Text>
+          <Text style={styles.nutritionBadgeText}>{meal.protein}g protein</Text>
+          <Text style={styles.spacer}> • </Text>
+          <Text style={styles.nutritionBadgeText}>{meal.carbs}g carbs</Text>
+          <Text style={styles.spacer}> • </Text>
+          <Text style={styles.nutritionBadgeText}>{meal.fat}g fat</Text>
+        </View>
+
+        {meal.dietary && meal.dietary.length > 0 && (
+          <View style={styles.dietaryInfo}>
+            {meal.dietary.map(diet => (
+              <View key={diet} style={[styles.dietaryBadge, { backgroundColor: Colors.success + '20' }]}>
+                <Text style={[styles.dietaryText, { color: Colors.success }]}>{diet}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    </>
   );
 }
 
@@ -109,29 +106,31 @@ const getMealTypeIcon = (mealType) => {
 };
 
 const styles = StyleSheet.create({
-  mealCard: {
-    marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 3,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
   mealCardGradient: {
     padding: 20,
+    borderRadius: 16,
   },
-  mealCardContent: {
+  indentedCard: {
+    marginLeft: 20,
+    marginRight: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+  },
+  indentedCardPlaceholder: {
+    marginLeft: 20,
+    marginRight: 16,
+    marginBottom: 16,
     padding: 20,
     backgroundColor: Colors.surface,
     borderRadius: 16,
+    justifyContent: 'center',
   },
   mealHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    marginTop: 16,
   },
   mealTypeContainer: {
     flexDirection: 'row',
@@ -148,6 +147,8 @@ const styles = StyleSheet.create({
   },
   mealHeaderText: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center', 
   },
   mealTypeTitle: {
     fontSize: 20,
@@ -160,6 +161,12 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '500',
   },
+  spacer: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+    marginHorizontal: 4,
+  },
   swapButton: {
     width: 40,
     height: 40,
@@ -168,35 +175,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mealContent: {
-    marginTop: 8,
+    marginTop: 0,
+    marginLeft: -10,
   },
   mealName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 4,
+    marginLeft: 18,
   },
   diningCourtLocation: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 6,
   },
   nutritionRow: {
+    marginTop: -8,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 12,
-  },
-  nutritionBadge: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 6,
+    alignItems: 'center',
   },
   nutritionBadgeText: {
     fontSize: 12,
-    color: Colors.primary,
+    color: Colors.textSecondary,
     fontWeight: '600',
   },
   dietaryInfo: {
