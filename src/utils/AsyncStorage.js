@@ -5,6 +5,8 @@ const STORAGE_KEYS = {
   IS_ONBOARDED: '@OptiMeal:isOnboarded',
   MEAL_HISTORY: '@OptiMeal:mealHistory',
   FAVORITES: '@OptiMeal:favorites',
+  ONBOARDING_DATA: '@OptiMeal:onboardingData', // new
+  RECOMMENDATIONS: '@OptiMeal:recommendations', // new
 };
 
 export const storage = {
@@ -46,6 +48,59 @@ export const storage = {
       return status ? JSON.parse(status) : false;
     } catch (error) {
       console.error('Error getting onboarded status:', error);
+      return false;
+    }
+  },
+
+  // Onboarding Data (existing)
+  async saveOnboardingData(data) {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_DATA, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+      return false;
+    }
+  },
+
+  async getOnboardingData() {
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_DATA);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      console.error('Error getting onboarding data:', error);
+      return null;
+    }
+  },
+
+  // Recommendations (new)
+  async saveRecommendations(recommendations) {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify(recommendations));
+      return true;
+    } catch (error) {
+      console.error('Error saving recommendations:', error);
+      return false;
+    }
+  },
+
+  async getRecommendations() {
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEYS.RECOMMENDATIONS);
+      console.log(JSON.parse(raw))
+      return JSON.parse(raw);
+    } catch (error) {
+      console.error('Error getting recommendations:', error);
+      return {};
+    }
+  },
+
+  async clearRecommendations() {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.RECOMMENDATIONS);
+      return true;
+    } catch (error) {
+      console.error('Error clearing recommendations:', error);
       return false;
     }
   },

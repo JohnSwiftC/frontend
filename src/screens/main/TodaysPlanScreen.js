@@ -39,7 +39,7 @@ export default function TodaysPlanScreen() {
     }, [currentDate])
   );
 
-  const formatDateKey = (dateObj) => {
+  const formatDateKey = async (dateObj) => {
     const y = dateObj.getFullYear();
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
     const d = String(dateObj.getDate()).padStart(2, '0');
@@ -51,7 +51,8 @@ export default function TodaysPlanScreen() {
       const profile = await storage.getUserProfile();
       if (profile) {
         setUserProfile(profile);
-        const plan = generateMealPlan(profile);
+        let plan = await generateMealPlan(profile);
+        plan.totalNutrition = calculateTotalNutrition(plan.meals);
         const key = formatDateKey(dateObj);
         setPlansByDate(prev => ({ ...prev, [key]: plan }));
       }
@@ -61,18 +62,6 @@ export default function TodaysPlanScreen() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    if (!userProfile) {
-      setIsRefreshing(false);
-      return;
-    }
-    const key = formatDateKey(currentDate);
-    const plan = generateMealPlan(userProfile);
-    setPlansByDate(prev => ({ ...prev, [key]: plan }));
-    setIsRefreshing(false);
   };
 
   const handleSwapMeal = async (mealType) => {
@@ -93,6 +82,7 @@ export default function TodaysPlanScreen() {
       };
       const totalNutrition = calculateTotalNutrition(Object.values(updatedMealPlan.meals));
       updatedMealPlan.totalNutrition = totalNutrition;
+      console.log("True");
       setPlansByDate(prev => ({ ...prev, [key]: updatedMealPlan }));
     } catch (error) {
       console.error('Error swapping meal:', error);
@@ -102,7 +92,46 @@ export default function TodaysPlanScreen() {
   };
 
   const calculateTotalNutrition = (meals) => {
-    return meals.reduce((total, meal) => {
+    // Accept either an array of meal objects, or an object with arrays:
+    // { breakfast: [...], lunch: [...], dinner: [...] }
+    let items = [];
+
+    if (!meals) {
+      return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    }
+
+    // If meals is an array (old format), use it directly
+    if (Array.isArray(meals)) {
+      items = meals;
+    } else if (typeof meals === 'object') {
+      // Collect any arrays inside the meals object (breakfast/lunch/dinner)
+      Object.keys(meals).forEach(key => {
+        const v = meals[key];
+        if (Array.isArray(v)) {
+          items = items.concat(v);
+        } else if (v && typeof v === 'object') {
+          // In case a single meal object is stored at meals[key]
+          items.push(v);
+        }
+      });
+    }
+
+    // Flatten items into individual food objects. Some items look like:
+    // { hall: 'Earhart', foods: [ { calories, protein, ... }, ... ] }
+    const flattenedFoods = [];
+    items.forEach(it => {
+      if (!it) return;
+      if (Array.isArray(it)) {
+        flattenedFoods.push(...it);
+      } else if (it.foods && Array.isArray(it.foods)) {
+        flattenedFoods.push(...it.foods);
+      } else if (typeof it === 'object') {
+        flattenedFoods.push(it);
+      }
+    });
+
+    console.log("flattenedFoods", flattenedFoods);
+    return flattenedFoods.reduce((total, meal) => {
       if (!meal) return total;
       return {
         calories: total.calories + meal.calories,
@@ -187,6 +216,7 @@ export default function TodaysPlanScreen() {
           {dates.map((date, index) => {
             const dateKey = formatDateKey(date);
             const plan = plansByDate[dateKey];
+            // console.log("plan", plan)
             return (
               <View key={index} style={styles.slide}>
                 <DayPlanView

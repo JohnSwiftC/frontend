@@ -39,6 +39,7 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
     // prefer structured data under plan.nutrition but fall back to a few common keys
     const getMetric = (key, label) => {
       const source = plan?.totalNutrition || plan;
+      // console.log("source", source);
       const source2 = plan?.targets || plan;
       const value = source?.[key]?.value ?? source?.[key] ?? null;
       const target = source2?.[key]?.target ?? source2?.['target'+label] ?? null;
@@ -83,6 +84,8 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
 
   // render individual meal blocks with expand/collapse functionality
   const renderMealBlock = (mealType, meal) => {
+    const items = Array.isArray(meal) ? meal : (meal ? [meal] : []);
+    items.hall = plan.hall;
     const mealColor = getMealTypeColor(mealType);
     const mealIcon = iconNameForMeal(mealType);
     const isExpanded = expandedMeals[mealType];
@@ -101,6 +104,8 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
             <Text style={styles.mealBlockTitle}>
               {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
             </Text>
+            <Text style={styles.spacer}> • </Text>
+            <Text style={styles.diningCourtName}>{meal.hall}</Text>
           </View>
           <View style={styles.expandButton}>
             <Ionicons 
@@ -156,6 +161,7 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
     );
   }
 
+
   return (
     <>
     <Text style={styles.dateHeader}>{formatDisplayDate(currentDate)}</Text>
@@ -186,6 +192,17 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 16,
+  },
+  diningCourtName: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  spacer: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+    marginHorizontal: 4,
   },
 
   noDataContainer: {

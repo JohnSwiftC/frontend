@@ -53,7 +53,7 @@ export default function PlanReadyScreen({ onComplete }) {
         await storage.setOnboarded(true);
 
         // Generate meal plan
-        const plan = generateMealPlan(userProfile);
+        const plan = await generateMealPlan(userProfile);
         setMealPlan(plan);
 
         // Animate in

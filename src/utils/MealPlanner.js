@@ -1,48 +1,52 @@
-import { mockMenuItems } from '../data/mockData';
+import { mockMenuItems, mockUserProfiles, getMenuItemsFor } from '../data/mockData';
+
+import { storage } from './AsyncStorage';
 
 // AI Meal Planning Algorithm (Mock Implementation)
-export const generateMealPlan = (userProfile, excludedItems = []) => {
+export  const generateMealPlan = async (userProfile = {}, excludedItems = []) => {
   const { goal, allergies = [], dietaryPreferences = [] } = userProfile;
 
-  const targets = computeNutritionTargets(userProfile);
-  
-  // Filter items based on user preferences and allergies
-  const availableItems = mockMenuItems.filter(item => {
-    // Check allergies
-    const hasAllergen = item.allergens.some(allergen => allergies.includes(allergen));
-    if (hasAllergen) return false;
-    
-    // Check dietary preferences
-    if (dietaryPreferences.length > 0) {
-      const matchesDiet = dietaryPreferences.some(diet => item.dietary.includes(diet));
-      if (!matchesDiet && item.dietary.length > 0) return false;
+  // Get target nutrition from profile goals
+  const targets = mockUserProfiles[goal] || mockUserProfiles.maintain;
+
+  // Safely fetch recommendations; default to empty object on error
+  const recomendations = await storage.getRecommendations().catch((e) => {
+    console.warn('storage.getRecommendations error', e);
+    return {};
+  }) || {};
+
+  // Helper to resolve foods for a meal type. Backend may store per-day blocks keyed by 0 or '0'
+  const resolveFoods = async (mealType, day = 0) => {
+    // Try stored recommendation shape: recs[day][mealType].foods
+    const dayBlock = recomendations?.[day] || recomendations?.[String(day)];
+    const foodsFromRec = dayBlock && dayBlock[mealType] && dayBlock[mealType].foods;
+    if (Array.isArray(foodsFromRec) && foodsFromRec.length > 0) return foodsFromRec;
+
+    // Fallback to menu items provider (will use mock items if storage has none)
+    try {
+      const fallback = await getMenuItemsFor(undefined, day, mealType);
+      if (Array.isArray(fallback) && fallback.length > 0) return fallback;
+    } catch (e) {
+      console.warn('getMenuItemsFor fallback error', e);
     }
-    
-    // Check excluded items
-    if (excludedItems.includes(item.id)) return false;
-    
-    return true;
-  });
-  console.log('Available Items:', availableItems);
-  // Group by meal category
-  const breakfastItems = availableItems.filter(item => item.category === 'breakfast');
-  const lunchItems = availableItems.filter(item => item.category === 'lunch');
-  const dinnerItems = availableItems.filter(item => item.category === 'dinner');
-  
-  // Simple algorithm: pick up to 2 items per meal that fit within calorie goals
-  const caloriesPerMeal = Math.floor(targets.targetCalories / 3);
-  
-  const selectedMeals = {
-    breakfast: selectMealItems(breakfastItems, caloriesPerMeal, targets),
-    lunch: selectMealItems(lunchItems, caloriesPerMeal, targets),
-    dinner: selectMealItems(dinnerItems, caloriesPerMeal, targets),
+
+    // Final fallback: local mock items filtered by category
+    return mockMenuItems.filter(it => it.category === mealType);
   };
-  
+
+  // Resolve meals (arrays of item objects)
+  const selectedMeals = {
+    breakfast: recomendations["0"].breakfast,
+    lunch: recomendations["0"].lunch,
+    dinner: recomendations["0"].dinner,
+  };
+
   // Calculate total nutrition
   const totalNutrition = calculateTotalNutrition(Object.values(selectedMeals));
-  
+
   return {
     meals: selectedMeals,
+    hall: recomendations?.hall,
     totalNutrition,
     targets,
     adherenceScore: calculateAdherenceScore(totalNutrition, targets),
@@ -181,24 +185,14 @@ const selectMealItems = (items, targetCalories, targets) => {
 };
 
 const calculateTotalNutrition = (meals) => {
-  return meals.reduce((total, meal) => {
-    if (!meal) return total;
-    // meal can be an array of items or a single item
-    const items = Array.isArray(meal) ? meal : [meal];
-    const sumForMeal = items.reduce((acc, item) => {
-      if (!item) return acc;
-      acc.calories += item.calories || 0;
-      acc.protein += item.protein || 0;
-      acc.carbs += item.carbs || 0;
-      acc.fat += item.fat || 0;
-      return acc;
-    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-
+  // meals may be an array of arrays (each meal contains multiple food items)
+  const items = Array.isArray(meals) ? meals.flat().filter(Boolean) : [];
+  return items.reduce((total, meal) => {
     return {
-      calories: total.calories + sumForMeal.calories,
-      protein: total.protein + sumForMeal.protein,
-      carbs: total.carbs + sumForMeal.carbs,
-      fat: total.fat + sumForMeal.fat,
+      calories: total.calories + (meal.calories || 0),
+      protein: total.protein + (meal.protein || 0),
+      carbs: total.carbs + (meal.carbs || 0),
+      fat: total.fat + (meal.fat || 0),
     };
   }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
 };
@@ -213,11 +207,11 @@ const calculateAdherenceScore = (actual, targets) => {
 };
 
 // Generate alternative meal for swapping
-export const generateAlternativeMeal = (currentMeal, userProfile, mealType) => {
-  const currentItems = Array.isArray(currentMeal) ? currentMeal : (currentMeal ? [currentMeal] : []);
-  const excludedItems = currentItems.map(i => i.id);
-  const fullPlan = generateMealPlan(userProfile, excludedItems);
-  return fullPlan.meals[mealType];
+// Generate alternative meal for swapping
+export const generateAlternativeMeal = async (currentMeal, userProfile, mealType) => {
+  const excludedItems = currentMeal ? [currentMeal.id] : [];
+  const fullPlan = await generateMealPlan(userProfile, excludedItems);
+  return fullPlan?.meals?.[mealType] || null;
 };
 
 // Search meals functionality

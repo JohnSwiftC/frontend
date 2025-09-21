@@ -1,3 +1,5 @@
+import { storage } from '../utils/AsyncStorage';
+
 import { Colors } from '../constants/Colors';
 
 export const diningCourts = [
@@ -66,159 +68,31 @@ export const activityLevels = [
 ];
 
 export const mockMenuItems = [
-  // Breakfast items
-  {
-    id: 'b1',
-    name: 'Greek Yogurt Parfait',
-    category: 'breakfast',
-    diningCourt: 'earhart',
-    calories: 180,
-    protein: 15,
-    carbs: 22,
-    fat: 3,
-    allergens: ['dairy'],
-    dietary: ['vegetarian'],
-  },
-  {
-    id: 'b2', 
-    name: 'Steel Cut Oatmeal',
-    category: 'breakfast',
-    diningCourt: 'earhart',
-    calories: 160,
-    protein: 6,
-    carbs: 30,
-    fat: 3,
-    allergens: [],
-    dietary: ['vegan', 'vegetarian'],
-  },
-  {
-    id: 'b3',
-    name: 'Scrambled Eggs',
-    category: 'breakfast',
-    diningCourt: 'ford',
-    calories: 140,
-    protein: 12,
-    carbs: 2,
-    fat: 10,
-    allergens: ['eggs'],
-    dietary: ['vegetarian'],
-  },
-  {
-    id: 'b4',
-    name: 'Avocado Toast',
-    category: 'breakfast',
-    diningCourt: 'wiley',
-    calories: 220,
-    protein: 8,
-    carbs: 25,
-    fat: 12,
-    allergens: ['gluten'],
-    dietary: ['vegan', 'vegetarian'],
-  },
-  
-  // Lunch items
-  {
-    id: 'l1',
-    name: 'Grilled Chicken Breast',
-    category: 'lunch',
-    diningCourt: 'earhart',
-    calories: 250,
-    protein: 46,
-    carbs: 0,
-    fat: 6,
-    allergens: [],
-    dietary: [],
-  },
-  {
-    id: 'l2',
-    name: 'Quinoa Power Bowl',
-    category: 'lunch', 
-    diningCourt: 'ford',
-    calories: 320,
-    protein: 14,
-    carbs: 58,
-    fat: 8,
-    allergens: [],
-    dietary: ['vegan', 'vegetarian'],
-  },
-  {
-    id: 'l3',
-    name: 'Turkey & Swiss Sandwich',
-    category: 'lunch',
-    diningCourt: 'wiley',
-    calories: 380,
-    protein: 28,
-    carbs: 35,
-    fat: 15,
-    allergens: ['gluten', 'dairy'],
-    dietary: [],
-  },
-  {
-    id: 'l4',
-    name: 'Mediterranean Salad',
-    category: 'lunch',
-    diningCourt: 'windsor',
-    calories: 290,
-    protein: 12,
-    carbs: 18,
-    fat: 20,
-    allergens: ['dairy'],
-    dietary: ['vegetarian'],
-  },
-  
-  // Dinner items
-  {
-    id: 'd1',
-    name: 'Baked Salmon',
-    category: 'dinner',
-    diningCourt: 'earhart',
-    calories: 340,
-    protein: 39,
-    carbs: 0,
-    fat: 19,
-    allergens: ['fish'],
-    dietary: [],
-  },
-  {
-    id: 'd2',
-    name: 'Vegetable Stir Fry',
-    category: 'dinner',
-    diningCourt: 'ford',
-    calories: 220,
-    protein: 8,
-    carbs: 35,
-    fat: 7,
-    allergens: [],
-    dietary: ['vegan', 'vegetarian'],
-  },
-  {
-    id: 'd3',
-    name: 'Beef Tacos',
-    category: 'dinner',
-    diningCourt: 'wiley',
-    calories: 420,
-    protein: 32,
-    carbs: 28,
-    fat: 22,
-    allergens: ['gluten', 'dairy'],
-    dietary: [],
-  },
-  {
-    id: 'd4',
-    name: 'Lentil Curry',
-    category: 'dinner',
-    diningCourt: 'windsor',
-    calories: 280,
-    protein: 18,
-    carbs: 45,
-    fat: 6,
-    allergens: [],
-    dietary: ['vegan', 'vegetarian'],
-  },
 ];
 
-// Deprecated: static profiles were replaced by dynamic targets computed from physical profile
-export const mockUserProfiles = {};
+export const mockUserProfiles = {
+  loseWeight: {
+    goal: 'Lose Weight',
+    targetCalories: 1800,
+    targetProtein: 135,
+    targetCarbs: 180,
+    targetFat: 60,
+  },
+  maintain: {
+    goal: 'Maintain',
+    targetCalories: 2200,
+    targetProtein: 165,
+    targetCarbs: 275,
+    targetFat: 73,
+  },
+  gainMuscle: {
+    goal: 'Gain Muscle',
+    targetCalories: 2600,
+    targetProtein: 195,
+    targetCarbs: 325,
+    targetFat: 87,
+  },
+};
 
 export const dietaryOptions = [
   { id: 'vegetarian', label: 'Vegetarian', icon: '🥬' },
@@ -265,3 +139,51 @@ export const goalOptions = [
     description: 'Higher protein and calorie intake for muscle growth'
   },
 ];
+
+// New helpers to access real recommendations stored by the startup logic.
+// Components can call getRecommendation(day, hall, meal_type) or getAllRecommendations()
+// to get the backend-provided data. If none available, fall back to mockMenuItems.
+
+export async function getAllRecommendationsFromStorage() {
+  try {
+    const recs = await storage.getRecommendations();
+    return recs || {};
+  } catch (e) {
+    console.warn('getAllRecommendationsFromStorage error', e);
+    return {};
+  }
+}
+
+// Returns the recommendation payload for a single day & meal_type, or null.
+// day: integer days from today (0..), hall: string, meal_type: 'breakfast'|'lunch'|'dinner'
+export async function getRecommendation(day = 0, hall = 'Windsor', meal_type = 'breakfast') {
+  try {
+    const recs = await getAllRecommendationsFromStorage();
+    // stored structure used by fetchAndStoreAllRecommendations: { day: { mealType: data } }
+    const dayBlock = recs?.[day];
+    if (dayBlock && dayBlock[meal_type]) return dayBlock[meal_type];
+    return null;
+  } catch (e) {
+    console.warn('getRecommendation error', e);
+    return null;
+  }
+}
+
+// Utility: get menu items for a hall/day/meal: prefer backend recs, otherwise filter mockMenuItems.
+export async function getMenuItemsFor(hall = 'windsor', day = 0, meal_type = 'breakfast') {
+  try {
+    const rec = await getRecommendation(day, hall, meal_type);
+    if (rec && Array.isArray(rec) && rec.length > 0) {
+      // assume backend returns an array of item objects; return as-is
+      return rec;
+    }
+    // fallback to local mock items filtered by diningCourt and category
+    const normalizedHall = (hall || 'windsor').toLowerCase();
+    return mockMenuItems.filter(
+      (it) => it.category === meal_type && it.diningCourt === normalizedHall
+    );
+  } catch (e) {
+    console.warn('getMenuItemsFor error', e);
+    return mockMenuItems.filter((it) => it.category === meal_type);
+  }
+}

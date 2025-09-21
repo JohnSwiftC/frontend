@@ -10,6 +10,8 @@ export default function MealCard({ mealType, meal, onSwapMeal, swappingMeal, get
   const icon = getMealTypeIcon(mealType);
   const isSwapping = swappingMeal === mealType;
 
+  // console.log("meal", meal, mealType)
+
   if (!meal) {
     return (
       <>
@@ -25,6 +27,7 @@ export default function MealCard({ mealType, meal, onSwapMeal, swappingMeal, get
       </>
     );
   }
+  // console.log("meal", meal);
 
   const mealItems = Array.isArray(meal) ? meal : [meal];
   const diningCourt = getDiningCourtInfo(mealItems[0]?.diningCourt);
@@ -32,11 +35,34 @@ export default function MealCard({ mealType, meal, onSwapMeal, swappingMeal, get
   return (
     <>
       <View style={styles.mealHeader}>
-        <Text style={styles.diningCourtName}>{diningCourt.name}</Text>
+        <View style={styles.mealTypeContainer}>
+          {/* <View style={[styles.mealIcon, { backgroundColor: color + '20' }]}>
+            <Ionicons name={icon} size={24} color={color} />
+          </View> */}
+          {/* <View style={styles.mealHeaderText}>
+            <Text style={styles.mealTypeTitle}>
+              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+            </Text>
+            <Text style={styles.spacer}> • </Text>
+            <Text style={styles.diningCourtName}>{meal.hall}</Text>
+          </View> */}
+        </View>
+        {/* <TouchableOpacity
+          style={[styles.swapButton, { backgroundColor: color }]}
+          onPress={() => onSwapMeal(mealType)}
+          disabled={isSwapping}
+          activeOpacity={0.7}
+        >
+          {isSwapping ? (
+            <ActivityIndicator size="small" color={Colors.textLight} />
+          ) : (
+            <Ionicons name="refresh" size={20} color={Colors.textLight} />
+          )}
+        </TouchableOpacity> */}
       </View>
       
       <View style={styles.mealContent}>
-        {mealItems.map((item, index) => (
+        {meal["foods"]?.map((item, index) => (
           <View key={item.id ?? index} style={styles.mealItem}>
             <View style={styles.mealItemHeader}>
               <Text style={styles.mealName}>{item.name}</Text>
