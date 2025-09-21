@@ -116,19 +116,19 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.textSecondary,
-    marginBottom: 32,
+    marginBottom: 20,
     lineHeight: 24,
   },
   activitiesContainer: {
     flex: 1,
   },
   activityCard: {
-    marginBottom: 8,
+    marginBottom: 12,
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 2,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
   activityCardGradient: {
-    padding: 12,
+    padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
   },
