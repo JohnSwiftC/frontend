@@ -2,7 +2,7 @@
 import { mockMenuItems, mockUserProfiles, getMenuItemsFor } from '../data/mockData';
 import { storage } from './AsyncStorage';
 
-// AI Meal Planning Algorithm (Mock Implementation)
+// AI Meal Planning Algorithm
 export const generateMealPlan = async (userProfile = {}, excludedItems = []) => {
   const { goal, allergies = [], dietaryPreferences = [] } = userProfile;
 
@@ -12,14 +12,16 @@ export const generateMealPlan = async (userProfile = {}, excludedItems = []) => 
   // Safely fetch recommendations
   let recommendations;
   try {
-    recommendations = await storage.getRecommendations() || {};
+    recommendations = await storage.getRecommendations();
+    console.log('MealPlanner - Fetched recommendations:', recommendations);
   } catch (e) {
-    console.warn('Failed to get recommendations:', e);
-    recommendations = {};
+    console.warn('MealPlanner - Failed to get recommendations:', e);
+    recommendations = null;
   }
 
-  // Check if we have recommendations for day 0
-  const dayZeroRecs = recommendations["0"] || recommendations[0];
+  // Check for day 0 recommendations
+  const dayZeroRecs = recommendations?.["0"] || recommendations?.[0];
+  console.log('MealPlanner - Day 0 recommendations:', dayZeroRecs);
   
   let selectedMeals = {
     breakfast: null,
@@ -28,54 +30,87 @@ export const generateMealPlan = async (userProfile = {}, excludedItems = []) => 
   };
 
   if (dayZeroRecs && dayZeroRecs.breakfast && dayZeroRecs.lunch && dayZeroRecs.dinner) {
-    // Use backend recommendations
-    console.log('Using backend recommendations');
+    console.log('MealPlanner - Using backend recommendations');
+    
+    // Keep the full backend response which includes the foods array
+    // Just ensure each meal has the structure we need
     selectedMeals = {
       breakfast: dayZeroRecs.breakfast,
       lunch: dayZeroRecs.lunch,
       dinner: dayZeroRecs.dinner
     };
   } else {
-    // Fallback to mock data
-    console.log('Using mock data - no backend recommendations found');
+    console.error('MealPlanner - No valid backend recommendations found');
+    // Return a basic structure instead of throwing
     selectedMeals = {
-      breakfast: createMockMeal('breakfast'),
-      lunch: createMockMeal('lunch'),
-      dinner: createMockMeal('dinner')
+      breakfast: { foods: [], name: 'No data', hall: 'Unknown' },
+      lunch: { foods: [], name: 'No data', hall: 'Unknown' },
+      dinner: { foods: [], name: 'No data', hall: 'Unknown' }
     };
   }
 
-  // Calculate total nutrition
-  const totalNutrition = calculateTotalNutrition(selectedMeals);
+  // Calculate total nutrition from the foods arrays
+  const totalNutrition = calculateTotalNutritionFromFoods(selectedMeals);
 
   return {
     meals: selectedMeals,
-    hall: recommendations?.hall || dayZeroRecs?.breakfast?.hall || 'Earhart',
+    hall: dayZeroRecs?.breakfast?.hall || dayZeroRecs?.breakfast?.name || 'Earhart',
     totalNutrition,
     targets,
     adherenceScore: calculateAdherenceScore(totalNutrition, targets)
   };
 };
 
-const calculateTotalNutrition = (meals) => {
-  // Initialize totals
+// Calculate nutrition from meals that contain foods arrays
+const calculateTotalNutritionFromFoods = (meals) => {
   let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
   
-  if (!meals) {
-    return totals;
-  }
+  if (!meals) return totals;
 
-  // Handle both array and object formats
+  // Process each meal (breakfast, lunch, dinner)
+  Object.values(meals).forEach(meal => {
+    if (meal && meal.foods && Array.isArray(meal.foods)) {
+      // Sum up nutrition from all foods in this meal
+      meal.foods.forEach(food => {
+        if (food) {
+          totals.calories += food.calories || food.cal || 0;
+          totals.protein += food.protein || food.pro || 0;
+          totals.carbs += food.carbs || food.carb || 0;
+          totals.fat += food.fat || 0;
+        }
+      });
+    } else if (meal && typeof meal === 'object') {
+      // Fallback if meal is a single food item
+      totals.calories += meal.calories || meal.cal || 0;
+      totals.protein += meal.protein || meal.pro || 0;
+      totals.carbs += meal.carbs || meal.carb || 0;
+      totals.fat += meal.fat || 0;
+    }
+  });
+
+  // Round the totals
+  totals.calories = Math.round(totals.calories);
+  totals.protein = Math.round(totals.protein);
+  totals.carbs = Math.round(totals.carbs);
+  totals.fat = Math.round(totals.fat);
+
+  return totals;
+};
+
+// Keep the old calculateTotalNutrition for backward compatibility
+const calculateTotalNutrition = (meals) => {
+  let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  
+  if (!meals) return totals;
+
   let mealItems = [];
   
   if (Array.isArray(meals)) {
     mealItems = meals;
   } else if (typeof meals === 'object') {
-    // Extract meal items from object (breakfast, lunch, dinner)
     mealItems = Object.values(meals).filter(meal => meal != null);
   }
 
-  // Calculate totals
   mealItems.forEach(meal => {
     if (meal && typeof meal === 'object') {
       totals.calories += meal.calories || 0;
@@ -105,44 +140,9 @@ const calculateAdherenceScore = (actual, targets) => {
 
 // Generate alternative meal for swapping
 export const generateAlternativeMeal = async (currentMeal, userProfile, mealType) => {
-  // For now, return a simple mock alternative
-  const alternatives = {
-    breakfast: {
-      id: 'alt-breakfast',
-      name: 'Alternative Breakfast',
-      description: 'Different morning option',
-      calories: 320,
-      protein: 18,
-      carbs: 42,
-      fat: 10,
-      category: 'breakfast',
-      diningCourt: 'windsor'
-    },
-    lunch: {
-      id: 'alt-lunch',
-      name: 'Alternative Lunch',
-      description: 'Different midday option',
-      calories: 420,
-      protein: 28,
-      carbs: 48,
-      fat: 14,
-      category: 'lunch',
-      diningCourt: 'windsor'
-    },
-    dinner: {
-      id: 'alt-dinner',
-      name: 'Alternative Dinner',
-      description: 'Different evening option',
-      calories: 480,
-      protein: 32,
-      carbs: 52,
-      fat: 16,
-      category: 'dinner',
-      diningCourt: 'windsor'
-    }
-  };
-  
-  return alternatives[mealType] || alternatives.breakfast;
+  // TODO: Implement actual alternative meal generation from backend
+  // For now, return the current meal
+  return currentMeal;
 };
 
 // Search meals functionality
