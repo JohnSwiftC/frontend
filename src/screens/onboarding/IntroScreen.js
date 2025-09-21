@@ -1,12 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Video } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/Colors';
 
 export default function IntroScreen({ onGetStarted }) {
+  const videoRef = useRef(null);
   const cardTranslateY = useRef(new Animated.Value(40)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
-  const placeholderOpacity = useRef(new Animated.Value(0)).current;
+  const placeholderOpacity = useRef(new Animated.Value(1)).current;
   
   // Text animation values
   const welcomeTranslateX = useRef(new Animated.Value(100)).current;
@@ -16,12 +18,6 @@ export default function IntroScreen({ onGetStarted }) {
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Start with placeholder fade-in
-    Animated.timing(placeholderOpacity, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
 
     // Card slide up
     Animated.spring(cardTranslateY, {
@@ -93,9 +89,26 @@ export default function IntroScreen({ onGetStarted }) {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.placeholderContainer, { opacity: placeholderOpacity }] }>
-        <LinearGradient colors={[Colors.primaryLight, Colors.surface]} style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Signature Animation Placeholder</Text>
-        </LinearGradient>
+        <View style={styles.placeholder}>
+          <Video
+            ref={videoRef}
+            source={require('../../../StarterVideo.mp4')}
+            style={styles.video}
+            resizeMode="cover"
+            shouldPlay
+            isMuted
+            isLooping={false}
+            useNativeControls={false}
+            onPlaybackStatusUpdate={(status) => {
+              if (status?.didJustFinish && videoRef.current) {
+                const endMs = Math.max(0, (status.durationMillis ?? 1) - 1);
+                videoRef.current.setPositionAsync(endMs).finally(() => {
+                  videoRef.current && videoRef.current.pauseAsync();
+                });
+              }
+            }}
+          />
+        </View>
       </Animated.View>
 
       <Animated.View style={[styles.bottomCard, { transform: [{ translateY: cardTranslateY }], opacity: cardOpacity }]}>
@@ -161,6 +174,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
+    overflow: 'hidden',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
   },
   placeholderText: {
     color: Colors.textSecondary,

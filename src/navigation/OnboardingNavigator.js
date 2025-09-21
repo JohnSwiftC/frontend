@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions, Animated, PanResponder } from 'react-native';
 import OnboardingWrapper from '../components/OnboardingWrapper';
 import { OnboardingProvider, useOnboarding } from '../context/OnboardingContext';
+import { Asset } from 'expo-asset';
 
 import IntroScreen from '../screens/onboarding/IntroScreen';
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
@@ -41,6 +42,9 @@ const OnboardingNavigator = ({ onComplete }) => {
   const { onboardingData } = useOnboarding();
 
   useEffect(() => {
+    // Preload intro video so playback starts instantly when IntroScreen mounts
+    Asset.fromModule(require('../../StarterVideo.mp4')).downloadAsync().catch(() => {});
+
     if (currentStageIndex > 0 && currentStageIndex <= contentCount && scrollViewRef.current) {
       const pageIndex = currentStageIndex - 1;
       scrollViewRef.current.scrollTo({ x: screenWidth * pageIndex, animated: true });
