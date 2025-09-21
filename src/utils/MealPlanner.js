@@ -99,7 +99,7 @@ const calculateTotalNutritionFromFoods = (meals) => {
   return totals;
 };
 
-// Keep the old calculateTotalNutrition for backward compatibility
+// Keep the old calculateTotalNutrition for backward compatibility working??
 const calculateTotalNutrition = (meals) => {
   let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
   
