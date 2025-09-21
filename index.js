@@ -18,10 +18,20 @@ function RootWrapper() {
 		try {
 			const onboarded = await storage.getOnboardedStatus();
 			if (!onboarded) {
-				await fetch(`${API_BASE}/register`, {
+				const res = await fetch(`${API_BASE}/register`, {
 					method: 'GET',
 					credentials: 'include', // include to let backend set cookie
 				});
+                console.log(res)
+                if (!res.ok) {
+                    const success = await res.json()
+                    if (success.success === false) {
+                        const res = await fetch(`${API_BASE}/register`, {
+                            method: 'GET',
+                            credentials: 'include', // include to let backend set cookie
+                        });
+                    }
+                }
 			}
 		} catch (err) {
 			// small silent failure; real app should log
@@ -180,7 +190,7 @@ function RootWrapper() {
 					await sendUserMacros(macros);
 
 					// fetch real meal recommendations after onboarding completes
-					const hall = onboardingData?.hall ?? 'Windsor';
+					const hall = onboardingData?.hall ?? 'Earhart';
 					await fetchAndStoreAllRecommendations(hall, 6);
 				}
 			} catch (e) {
