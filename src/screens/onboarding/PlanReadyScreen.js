@@ -35,10 +35,10 @@ export default function PlanReadyScreen({ onComplete }) {
     const generatePlan = async () => {
       try {
         const userProfile = {
-          goal: goal.id,
-          goalDetails: goal,
-          dietaryPreferences,
-          allergies,
+          goal: goal?.id || null,  // Add optional chaining
+          goalDetails: goal || {},  // Provide default
+          dietaryPreferences: dietaryPreferences || [],
+          allergies: allergies || [],
           sex,
           age,
           height,
@@ -72,6 +72,10 @@ export default function PlanReadyScreen({ onComplete }) {
         ]).start();
       } catch (error) {
         console.error('Error generating plan:', error);
+        // Add fallback behavior
+        if (onComplete) {
+          onComplete();
+        }
       }
     };
 
@@ -81,105 +85,112 @@ export default function PlanReadyScreen({ onComplete }) {
   const handleContinue = () => {
     Animated.timing(slideX, {
       toValue: -screenWidth,
-      duration: 200,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => {
-      onComplete();
+      if (onComplete) {
+        onComplete();
+      }
     });
   };
 
+  const renderMealCard = (meal, index) => {
+    if (!meal) return null;
+    
+    return (
+      <Animated.View
+        key={index}
+        style={[
+          styles.mealCard,
+          {
+            opacity: fadeAnim,
+            transform: [
+              { scale: scaleAnim },
+              { translateX: slideX }
+            ]
+          }
+        ]}
+      >
+        <LinearGradient
+          colors={[Colors.primaryLight + '20', Colors.primaryLight + '10']}
+          style={styles.mealCardGradient}
+        >
+          <View style={styles.mealHeader}>
+            <Text style={styles.mealType}>{meal.type}</Text>
+            <Text style={styles.mealCalories}>{meal.calories} cal</Text>
+          </View>
+          <Text style={styles.mealName}>{meal.name}</Text>
+          <Text style={styles.mealDescription}>{meal.description}</Text>
+        </LinearGradient>
+      </Animated.View>
+    );
+  };
 
+  const footerContent = (
+    <View 
+      style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}
+      onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
+    >
+      <TouchableOpacity
+        style={styles.continueButton}
+        onPress={handleContinue}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryDark]}
+          style={styles.continueButtonGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.continueButtonText}>Start Your Journey</Text>
+          <Ionicons name="arrow-forward" size={20} color={Colors.textLight} />
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Animated.View style={{ flex: 1, transform: [{ translateX: slideX }] }}>
-        <Animated.View 
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
-          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(footerHeight, 120) }]}>
-            <View style={styles.successContainer}>
-              <View style={styles.checkmarkContainer}>
-                <LinearGradient
-                  colors={[Colors.success, Colors.success + 'CC']}
-                  style={styles.checkmarkGradient}
-                >
-                  <Ionicons name="checkmark" size={48} color={Colors.textLight} />
-                </LinearGradient>
-              </View>
-
-              <Text style={styles.successTitle}>Your nutrition targets are set!</Text>
-              <Text style={styles.successSubtitle}>
-                Based on your profile, we've calculated your daily nutrition goals and created your first meal plan.
-              </Text>
+      <ScrollView 
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: footerHeight }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={[styles.content, {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }, { translateX: slideX }]
+        }]}>
+          <View style={styles.headerContainer}>
+            <View style={styles.successIcon}>
+              <Ionicons name="checkmark-circle" size={60} color={Colors.success} />
             </View>
+            <Text style={styles.title}>Your Plan is Ready!</Text>
+            <Text style={styles.subtitle}>
+              Here's a preview of your personalized meal plan for today
+            </Text>
+          </View>
 
-            {mealPlan && (
-              <View style={styles.nutritionTargetsSection}>
-                <View style={styles.nutritionOverview}>
-                  <LinearGradient
-                    colors={[Colors.success, Colors.success + 'DD']}
-                    style={styles.nutritionGradient}
-                  >
-                    <View style={styles.nutritionGrid}>
-                      <View style={styles.nutritionGridRow}>
-                        <View style={styles.nutritionGridItem}>
-                          <Text style={styles.nutritionValue}>
-                            {Math.round(mealPlan.targets.targetCalories)}
-                          </Text>
-                          <Text style={styles.nutritionLabel}>Calories</Text>
-                        </View>
-                        <View style={styles.nutritionGridItem}>
-                          <Text style={styles.nutritionValue}>
-                            {Math.round(mealPlan.targets.targetProtein)}g
-                          </Text>
-                          <Text style={styles.nutritionLabel}>Protein</Text>
-                        </View>
-                      </View>
-                      <View style={styles.nutritionGridRow}>
-                        <View style={styles.nutritionGridItem}>
-                          <Text style={styles.nutritionValue}>
-                            {Math.round(mealPlan.targets.targetCarbs)}g
-                          </Text>
-                          <Text style={styles.nutritionLabel}>Carbs</Text>
-                        </View>
-                        <View style={styles.nutritionGridItem}>
-                          <Text style={styles.nutritionValue}>
-                            {Math.round(mealPlan.targets.targetFat)}g
-                          </Text>
-                          <Text style={styles.nutritionLabel}>Fat</Text>
-                        </View>
-                      </View>
-                    </View>
-                  </LinearGradient>
-                </View>
-                <Text style={styles.perDayText}>PER DAY</Text>
-              </View>
-            )}
-          </ScrollView>
+          {mealPlan && (
+            <View style={styles.mealsContainer}>
+              {renderMealCard(mealPlan.breakfast, 0)}
+              {renderMealCard(mealPlan.lunch, 1)}
+              {renderMealCard(mealPlan.dinner, 2)}
+            </View>
+          )}
+
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{mealPlan?.totalCalories || 0}</Text>
+              <Text style={styles.statLabel}>Daily Calories</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{mealPlan?.mealsPerDay || 3}</Text>
+              <Text style={styles.statLabel}>Meals Per Day</Text>
+            </View>
+          </View>
         </Animated.View>
+      </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]} onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}>
-          <TouchableOpacity
-            style={styles.continueButton}
-            onPress={handleContinue}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={[Colors.success, Colors.success + 'DD']}
-              style={styles.buttonGradient}
-            >
-              <Text style={styles.buttonText}>View My Meals</Text>
-              <Ionicons name="arrow-forward" size={20} color={Colors.textLight} style={styles.buttonIcon} />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
+      {footerContent}
     </View>
   );
 }
@@ -187,142 +198,132 @@ export default function PlanReadyScreen({ onComplete }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    flex: 1,
+    backgroundColor: Colors.surface,
   },
   scrollContent: {
     flexGrow: 1,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 24,
-    paddingBottom: 120, // baseline, overridden by measured footerHeight
-    paddingTop: 66, // Simulate header height so checkmark sits lower
+    paddingTop: 40,
   },
-  successContainer: {
+  headerContainer: {
     alignItems: 'center',
-    paddingVertical: 32,
+    marginBottom: 32,
   },
-  checkmarkContainer: {
-    marginBottom: 24,
+  successIcon: {
+    marginBottom: 20,
   },
-  checkmarkGradient: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: Colors.success,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-  },
-  successTitle: {
-    fontSize: 22,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text,
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
   },
-  successSubtitle: {
+  subtitle: {
     fontSize: 16,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
-    paddingHorizontal: 20,
-    marginBottom: 2,
   },
-  nutritionTargetsSection: {
-    marginTop: 0,
-    justifyContent: 'center',
+  mealsContainer: {
+    marginBottom: 24,
   },
-  nutritionOverview: {
+  mealCard: {
+    marginBottom: 16,
     borderRadius: 16,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 3,
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    marginHorizontal: 16,
   },
-  nutritionGradient: {
+  mealCardGradient: {
     padding: 16,
   },
-  nutritionGrid: {
-    gap: 8,
-  },
-  nutritionGridRow: {
+  mealHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  nutritionGridItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 10,
-    marginHorizontal: 6,
-    minHeight: 75,
-    justifyContent: 'center',
+  mealType: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary,
+    textTransform: 'uppercase',
   },
-  nutritionValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: Colors.textLight,
+  mealCalories: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  mealName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
     marginBottom: 4,
   },
-  nutritionLabel: {
-    fontSize: 13,
-    color: Colors.textLight,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    opacity: 0.9,
+  mealDescription: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
   },
-  perDayText: {
-    fontSize: 16,
-    color: Colors.text,
-    textAlign: 'center',
-    marginTop: 20,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 24,
+  },
+  statCard: {
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    flex: 1,
+    marginHorizontal: 6,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   footer: {
-    padding: 24,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
   continueButton: {
     borderRadius: 12,
     overflow: 'hidden',
+    elevation: 4,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
-  buttonGradient: {
+  continueButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
     paddingHorizontal: 24,
   },
-  buttonText: {
-    fontSize: 18,
+  continueButtonText: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: Colors.textLight,
-  },
-  buttonIcon: {
-    marginLeft: 8,
+    marginRight: 8,
   },
 });

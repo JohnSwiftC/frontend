@@ -30,5 +30,12 @@ export const OnboardingProvider = ({ children }) => {
 };
 
 export const useOnboarding = () => {
-  return useContext(OnboardingContext);
+  const context = useContext(OnboardingContext);
+  
+  // Add error handling to prevent undefined context issues
+  if (!context) {
+    throw new Error('useOnboarding must be used within an OnboardingProvider');
+  }
+  
+  return context;
 };
