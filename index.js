@@ -18,20 +18,13 @@ function RootWrapper() {
 		try {
 			const onboarded = await storage.getOnboardedStatus();
 			if (!onboarded) {
+
 				const res = await fetch(`${API_BASE}/register`, {
 					method: 'GET',
 					credentials: 'include', // include to let backend set cookie
 				});
-                console.log(res)
-                if (!res.ok) {
-                    const success = await res.json()
-                    if (success.success === false) {
-                        const res = await fetch(`${API_BASE}/register`, {
-                            method: 'GET',
-                            credentials: 'include', // include to let backend set cookie
-                        });
-                    }
-                }
+				// console.log(res)
+				// console.log(await res.text())
 			}
 		} catch (err) {
 			// small silent failure; real app should log
@@ -102,7 +95,7 @@ function RootWrapper() {
 
 	async function fetchRecommendations(hall = 'Windsor', day = 0, meal_type = 'breakfast') {
 		try {
-			const url = `${API_BASE}/recommend`;
+			const url = `${API_BASE}/recommend_mean`;
 			const payload = { day, hall, meal_type };
 
 			// Try POST first (preferred)
@@ -148,7 +141,7 @@ function RootWrapper() {
 				result[d] = {};
 				for (const m of mealTypes) { 
 					const rec = await fetchRecommendations(hall, d, m);
-                    rec["hall"] = hall;
+                    rec["hall"] = rec["name"];
 					result[d][m] = rec;
 				}
 			}
