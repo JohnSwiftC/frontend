@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -24,7 +23,7 @@ const LOADING_MESSAGES = [
   "Finalizing your meal journey..."
 ];
 
-export default function LoadingScreen({ navigation, route }) {
+export default function LoadingScreen({ onLoadingComplete }) {
   const [currentMessage, setCurrentMessage] = useState('');
   const [usedMessages, setUsedMessages] = useState([]);
 
@@ -55,54 +54,42 @@ export default function LoadingScreen({ navigation, route }) {
     // Navigate to plan ready screen after 2 seconds
     const navigationTimer = setTimeout(() => {
       clearInterval(messageInterval);
-      navigation.navigate('PlanReady', route.params);
+      if (onLoadingComplete) {
+        onLoadingComplete();
+      }
     }, 2000);
 
     return () => {
       clearInterval(messageInterval);
       clearTimeout(navigationTimer);
     };
-  }, []);
+  }, [onLoadingComplete]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={[Colors.primary + '15', Colors.background]}
-        style={styles.background}
-      >
-        <View style={styles.content}>
-          <View style={styles.iconContainer}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              style={styles.iconGradient}
-            >
-              <Ionicons name="restaurant" size={48} color={Colors.textLight} />
-            </LinearGradient>
-          </View>
-
-          <Text style={styles.title}>OptiMeal</Text>
-          <Text style={styles.subtitle}>Your AI Nutritionist</Text>
-
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator 
-              size="large" 
-              color={Colors.primary} 
-              style={styles.spinner}
-            />
-            <Text style={styles.loadingMessage}>{currentMessage}</Text>
-          </View>
-
-          <View style={styles.progressContainer}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              style={styles.progressBar}
-            >
-              <View style={styles.progressIndicator} />
-            </LinearGradient>
-          </View>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          <LinearGradient
+            colors={[Colors.primary, Colors.primaryDark]}
+            style={styles.iconGradient}
+          >
+            <Ionicons name="restaurant" size={48} color={Colors.textLight} />
+          </LinearGradient>
         </View>
-      </LinearGradient>
-    </SafeAreaView>
+
+        <Text style={styles.title}>OptiMeal</Text>
+        <Text style={styles.subtitle}>Your AI Nutritionist</Text>
+
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator 
+            size="large" 
+            color={Colors.primary} 
+            style={styles.spinner}
+          />
+          <Text style={styles.loadingMessage}>{currentMessage}</Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -110,9 +97,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  background: {
-    flex: 1,
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
@@ -161,19 +146,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
     minHeight: 24,
-  },
-  progressContainer: {
-    width: '100%',
-    marginTop: 48,
-  },
-  progressBar: {
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressIndicator: {
-    height: '100%',
-    backgroundColor: Colors.textLight,
-    opacity: 0.8,
   },
 });

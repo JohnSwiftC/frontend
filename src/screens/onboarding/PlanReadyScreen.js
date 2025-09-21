@@ -6,21 +6,29 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Dimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';
 import { generateMealPlan } from '../../utils/MealPlanner';
-import { diningCourts } from '../../data/mockData';
+import { diningCourts, goalOptions, dietaryOptions, allergenOptions } from '../../data/mockData';
+import { useOnboarding } from '../../context/OnboardingContext';
 
-export default function PlanReadyScreen({ navigation, route, onComplete }) {
-  const { goal, dietaryPreferences, allergies } = route.params;
+
+export default function PlanReadyScreen({ onComplete }) {
+  const { onboardingData } = useOnboarding();
+  const { goal, dietaryPreferences, allergies } = onboardingData;
   const [mealPlan, setMealPlan] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [slideX] = useState(new Animated.Value(0));
+  const insets = useSafeAreaInsets();
+  const [footerHeight, setFooterHeight] = useState(0);
+  const screenWidth = Dimensions.get('window').width;
 
   useEffect(() => {
     // Generate the meal plan
@@ -65,7 +73,13 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
   }, []);
 
   const handleContinue = () => {
-    onComplete();
+    Animated.timing(slideX, {
+      toValue: -screenWidth,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      onComplete();
+    });
   };
 
   const getDiningCourtInfo = (diningCourtId) => {
@@ -100,7 +114,7 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
     return (
       <View key={mealType} style={styles.mealCard}>
         <LinearGradient
-          colors={[color + '15', Colors.surface]}
+          colors={['#F5F5F5', '#F5F5F5']}
           style={styles.mealCardGradient}
         >
           <View style={styles.mealHeader}>
@@ -112,7 +126,6 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
                 {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
               </Text>
               <Text style={styles.mealName}>{meal.name}</Text>
-              <Text style={styles.diningCourt}>{diningCourt.name}</Text>
             </View>
             <View style={styles.nutritionSummary}>
               <Text style={styles.calories}>{meal.calories}</Text>
@@ -125,11 +138,8 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={[Colors.success + '15', Colors.background]}
-        style={styles.background}
-      >
+    <View style={styles.container}>
+      <Animated.View style={{ flex: 1, transform: [{ translateX: slideX }] }}>
         <Animated.View 
           style={[
             styles.content,
@@ -139,7 +149,7 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
             },
           ]}
         >
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(footerHeight, 120) }]}>
             <View style={styles.successContainer}>
               <View style={styles.checkmarkContainer}>
                 <LinearGradient
@@ -205,7 +215,7 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
           </ScrollView>
         </Animated.View>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]} onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}>
           <TouchableOpacity
             style={styles.continueButton}
             onPress={handleContinue}
@@ -220,8 +230,8 @@ export default function PlanReadyScreen({ navigation, route, onComplete }) {
             </LinearGradient>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
-    </SafeAreaView>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -230,15 +240,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  background: {
-    flex: 1,
-  },
   content: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
+    paddingBottom: 120, // baseline, overridden by measured footerHeight
+    paddingTop: 66, // Simulate header height so checkmark sits lower
   },
   successContainer: {
     alignItems: 'center',
@@ -320,7 +329,7 @@ const styles = StyleSheet.create({
   nutritionLabel: {
     fontSize: 12,
     color: Colors.textLight,
-    marginTop: 4,
+    marginTop: 2,
     opacity: 0.9,
   },
   mealsPreview: {
@@ -365,10 +374,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 2,
   },
-  diningCourt: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
   nutritionSummary: {
     alignItems: 'center',
   },
@@ -384,7 +389,18 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 24,
-    paddingBottom: 32,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   continueButton: {
     borderRadius: 12,

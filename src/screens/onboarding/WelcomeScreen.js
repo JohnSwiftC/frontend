@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,21 +6,20 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useOnboarding } from '../../context/OnboardingContext';
 
 import { Colors } from '../../constants/Colors';
 import { goalOptions } from '../../data/mockData';
 
-export default function WelcomeScreen({ navigation }) {
-  const [selectedGoal, setSelectedGoal] = useState(null);
+export default function WelcomeScreen() {
+  const { onboardingData, updateOnboardingData } = useOnboarding();
+  const [selectedGoal, setSelectedGoal] = useState(onboardingData.goal);
 
-  const handleContinue = () => {
-    if (selectedGoal) {
-      navigation.navigate('DietaryPreferences', { goal: selectedGoal });
-    }
-  };
+  useEffect(() => {
+    updateOnboardingData({ goal: selectedGoal });
+  }, [selectedGoal]);
 
   const renderGoalCard = (goal) => (
     <TouchableOpacity
@@ -33,7 +32,7 @@ export default function WelcomeScreen({ navigation }) {
       activeOpacity={0.7}
     >
       <LinearGradient
-        colors={selectedGoal?.id === goal.id ? [goal.color + '20', goal.color + '10'] : [Colors.surface, Colors.surface]}
+        colors={selectedGoal?.id === goal.id ? [goal.color + '20', goal.color + '20'] : ['#F5F5F5', '#F5F5F5']}
         style={styles.goalCardGradient}
       >
         <View style={styles.goalIconContainer}>
@@ -56,104 +55,27 @@ export default function WelcomeScreen({ navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={[Colors.primary + '10', Colors.background]}
-        style={styles.background}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.welcomeText}>Welcome to</Text>
-            <Text style={styles.appTitle}>OptiMeal</Text>
-            <Text style={styles.subtitle}>Your AI Nutritionist</Text>
-            <Text style={styles.description}>
-              Let's personalize your dining experience! First, tell us your primary goal.
-            </Text>
-          </View>
-
-          <View style={styles.goalsContainer}>
-            <Text style={styles.sectionTitle}>What's your goal?</Text>
-            {goalOptions.map(renderGoalCard)}
-          </View>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[
-              styles.continueButton,
-              !selectedGoal && styles.disabledButton
-            ]}
-            onPress={handleContinue}
-            disabled={!selectedGoal}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={selectedGoal ? [Colors.primary, Colors.primaryDark] : [Colors.border, Colors.border]}
-              style={styles.buttonGradient}
-            >
-              <Text style={[styles.buttonText, !selectedGoal && styles.disabledButtonText]}>
-                Continue
-              </Text>
-              <Ionicons 
-                name="arrow-forward" 
-                size={20} 
-                color={selectedGoal ? Colors.textLight : Colors.textSecondary} 
-                style={styles.buttonIcon}
-              />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-    </SafeAreaView>
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.goalsContainer}>
+        <Text style={styles.title}>What's your goal?</Text>
+        {goalOptions.map(renderGoalCard)}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  background: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-  },
-  header: {
-    paddingTop: 40,
-    paddingBottom: 32,
-    alignItems: 'center',
-  },
-  welcomeText: {
-    fontSize: 24,
-    color: Colors.textSecondary,
-    fontWeight: '300',
-  },
-  appTitle: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: Colors.primary,
-    marginTop: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  description: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 24,
-    lineHeight: 24,
+    paddingBottom: 100, // Add padding to avoid being hidden by the footer
+    paddingTop: 24,
   },
   goalsContainer: {
     flex: 1,
   },
-  sectionTitle: {
-    fontSize: 22,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: 24,
@@ -167,6 +89,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
+    backgroundColor: 'transparent',
   },
   selectedGoalCard: {
     elevation: 8,
@@ -183,7 +106,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: Colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -220,34 +142,5 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  footer: {
-    padding: 24,
-    paddingBottom: 32,
-  },
-  continueButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  buttonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textLight,
-  },
-  disabledButtonText: {
-    color: Colors.textSecondary,
-  },
-  buttonIcon: {
-    marginLeft: 8,
   },
 });

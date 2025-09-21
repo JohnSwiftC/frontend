@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { ActivityIndicator, View } from 'react-native';
 
 import OnboardingNavigator from './OnboardingNavigator';
 import MainTabNavigator from './MainTabNavigator';
+import PreferenceDetailScreen from '../screens/main/PreferenceDetailScreen';
+import SettingsScreen from '../screens/main/SettingsScreen';
 import { storage } from '../utils/AsyncStorage';
 import { Colors } from '../constants/Colors';
 
@@ -43,9 +45,40 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{ 
+        headerShown: false,
+        cardStyle: { backgroundColor: Colors.surface },
+      }}>
         {isOnboarded ? (
-          <Stack.Screen name="Main" component={MainTabNavigator} />
+          <>
+            <Stack.Screen name="Main" component={MainTabNavigator} />
+            <Stack.Screen 
+              name="PreferenceDetail" 
+              component={PreferenceDetailScreen}
+              options={{
+                headerShown: false,
+                gestureEnabled: true,
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+                transitionSpec: {
+                  open: { animation: 'timing', config: { duration: 180 } },
+                  close: { animation: 'timing', config: { duration: 180 } },
+                },
+              }}
+            />
+            <Stack.Screen 
+              name="Settings" 
+              component={SettingsScreen}
+              options={{
+                headerShown: false,
+                gestureEnabled: true,
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+                transitionSpec: {
+                  open: { animation: 'timing', config: { duration: 180 } },
+                  close: { animation: 'timing', config: { duration: 180 } },
+                },
+              }}
+            />
+          </>
         ) : (
           <Stack.Screen name="Onboarding">
             {props => <OnboardingNavigator {...props} onComplete={handleOnboardingComplete} />}

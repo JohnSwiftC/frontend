@@ -18,7 +18,7 @@ import { diningCourts, dietaryOptions, allergenOptions } from '../../data/mockDa
 
 export default function BrowseMenusScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('breakfast');
   const [selectedDiningCourt, setSelectedDiningCourt] = useState('all');
   const [searchResults, setSearchResults] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -28,11 +28,9 @@ export default function BrowseMenusScreen() {
   }, [searchQuery, selectedCategory, selectedDiningCourt]);
 
   const performSearch = () => {
-    const filters = {};
-    
-    if (selectedCategory !== 'all') {
-      filters.category = selectedCategory;
-    }
+    const filters = {
+      category: selectedCategory
+    };
     
     if (selectedDiningCourt !== 'all') {
       filters.diningCourt = selectedDiningCourt;
@@ -43,7 +41,6 @@ export default function BrowseMenusScreen() {
   };
 
   const categories = [
-    { id: 'all', label: 'All', icon: 'restaurant' },
     { id: 'breakfast', label: 'Breakfast', icon: 'sunny' },
     { id: 'lunch', label: 'Lunch', icon: 'partly-sunny' },
     { id: 'dinner', label: 'Dinner', icon: 'moon' },
@@ -54,36 +51,38 @@ export default function BrowseMenusScreen() {
   };
 
   const renderCategoryFilter = () => (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      style={styles.categoryScroll}
-      contentContainerStyle={styles.categoryContainer}
-    >
-      {categories.map(category => (
-        <TouchableOpacity
-          key={category.id}
-          style={[
-            styles.categoryButton,
-            selectedCategory === category.id && styles.selectedCategoryButton
-          ]}
-          onPress={() => setSelectedCategory(category.id)}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={category.icon} 
-            size={20} 
-            color={selectedCategory === category.id ? Colors.textLight : Colors.textSecondary} 
-          />
-          <Text style={[
-            styles.categoryText,
-            selectedCategory === category.id && styles.selectedCategoryText
-          ]}>
-            {category.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+    <View style={styles.categoryFilterContainer}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScroll}
+        contentContainerStyle={styles.categoryContainer}
+      >
+        {categories.map(category => (
+          <TouchableOpacity
+            key={category.id}
+            style={[
+              styles.categoryButton,
+              selectedCategory === category.id && styles.selectedCategoryButton
+            ]}
+            onPress={() => setSelectedCategory(category.id)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={category.icon} 
+              size={20} 
+              color={selectedCategory === category.id ? Colors.textLight : Colors.textSecondary} 
+            />
+            <Text style={[
+              styles.categoryText,
+              selectedCategory === category.id && styles.selectedCategoryText
+            ]}>
+              {category.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 
   const renderDiningCourtFilter = () => (
@@ -317,14 +316,19 @@ const styles = StyleSheet.create({
   clearButton: {
     marginLeft: 8,
   },
+  categoryFilterContainer: {
+    height: 64, // Fixed height to prevent vertical movement
+    marginBottom: 5,
+    overflow: 'hidden', // Prevent any overflow from affecting layout
+  },
   categoryScroll: {
     paddingHorizontal: 20,
-    marginBottom: 20,
     height: 44,
   },
   categoryContainer: {
     alignItems: 'center',
     paddingRight: 20,
+    height: 44, // Fixed height matching scroll view
   },
   categoryButton: {
     flexDirection: 'row',
@@ -357,6 +361,7 @@ const styles = StyleSheet.create({
   diningCourtFilter: {
     paddingHorizontal: 20,
     marginBottom: 20,
+    height: 60, // Fixed height to prevent layout shift
   },
   filterLabel: {
     fontSize: 16,
@@ -370,6 +375,7 @@ const styles = StyleSheet.create({
   diningCourtContainer: {
     paddingRight: 20,
     alignItems: 'center',
+    height: 32, // Fixed height matching scroll view
   },
   diningCourtButton: {
     backgroundColor: Colors.surface,

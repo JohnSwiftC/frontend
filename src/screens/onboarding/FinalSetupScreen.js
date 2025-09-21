@@ -7,234 +7,189 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';
 import { goalOptions, dietaryOptions, allergenOptions } from '../../data/mockData';
+import { useOnboarding } from '../../context/OnboardingContext';
 
-export default function FinalSetupScreen({ navigation, route }) {
-  const { goal, dietaryPreferences, allergies } = route.params;
-  const [isLoading, setIsLoading] = useState(false);
+const activityLevels = [
+  { id: 'sedentary', title: 'Sedentary' },
+  { id: 'lightly_active', title: 'Lightly Active' },
+  { id: 'moderately_active', title: 'Moderately Active' },
+  { id: 'very_active', title: 'Very Active' },
+  { id: 'extra_active', title: 'Extra Active' },
+];
 
-  const handleFinishSetup = () => {
-    setIsLoading(true);
-    
-    // Navigate to loading screen with all the data
-    navigation.navigate('Loading', {
-      goal,
-      dietaryPreferences,
-      allergies,
-    });
-    
-    setIsLoading(false);
-  };
+export default function FinalSetupScreen() {
+  const { onboardingData } = useOnboarding();
+  const { goal, dietaryPreferences, allergies, sex, age, height, weight, activityLevel, unitSystem } = onboardingData;
 
   const getSelectedOptions = (optionsArray, selectedIds) => {
-    return optionsArray.filter(option => selectedIds.includes(option.id));
+    if (!selectedIds) return [];
+    return optionsArray.filter(option => option.id !== undefined && selectedIds.includes(option.id));
   };
 
   const selectedDietaryOptions = getSelectedOptions(dietaryOptions, dietaryPreferences);
   const selectedAllergyOptions = getSelectedOptions(allergenOptions, allergies);
+  const selectedActivityLevel = activityLevels.find(level => level.id === activityLevel);
+
+  const formatHeight = () => {
+    if (unitSystem === 'imperial') {
+      const totalInches = Math.round(height / 2.54);
+      const feet = Math.floor(totalInches / 12);
+      const inches = totalInches % 12;
+      return `${feet}' ${inches}"`;
+    }
+    return `${height} cm`;
+  };
+
+  const formatWeight = () => {
+    if (unitSystem === 'imperial') {
+      return `${Math.round(weight * 2.20462)} lbs`;
+    }
+    return `${weight} kg`;
+  };
+
+  const formatSex = (sex) => {
+    if (!sex) return '';
+    return sex.charAt(0).toUpperCase() + sex.slice(1);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={[Colors.primary + '15', Colors.background]}
-        style={styles.background}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={24} color={Colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Review</Text>
-          <View style={styles.headerSpacer} />
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>You're all set!</Text>
+          <Text style={styles.subtitle}>
+            Review your preferences before we create your meal plans.
+          </Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.content}>
-            <View style={styles.celebrationContainer}>
-              <Text style={styles.celebrationEmoji}>🎉</Text>
-              <Text style={styles.title}>You're all set!</Text>
-              <Text style={styles.subtitle}>
-                Let's review your preferences before we start creating your personalized meal plans.
-              </Text>
+        <View style={styles.summaryContainer}>
+          {/* Physical Profile Section */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderSimple}>
+              <Text style={styles.sectionTitle}>Your Profile</Text>
             </View>
-
-            <View style={styles.summaryContainer}>
-              <View style={styles.summaryCard}>
-                <LinearGradient
-                  colors={[goal.color + '20', goal.color + '10']}
-                  style={styles.summaryCardGradient}
-                >
-                  <View style={styles.summaryHeader}>
-                    <View style={[styles.summaryIcon, { backgroundColor: goal.color + '30' }]}>
-                      <Text style={styles.summaryIconText}>{goal.icon}</Text>
-                    </View>
-                    <View style={styles.summaryHeaderText}>
-                      <Text style={styles.summaryLabel}>Your Goal</Text>
-                      <Text style={[styles.summaryValue, { color: goal.color }]}>{goal.title}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.summaryDescription}>{goal.description}</Text>
-                </LinearGradient>
+            <View style={styles.profileGrid}>
+              <View style={styles.profileItem}>
+                <Text style={styles.profileLabel}>Sex</Text>
+                <Text style={styles.profileValue}>{formatSex(sex)}</Text>
               </View>
-
-              {selectedDietaryOptions.length > 0 && (
-                <View style={styles.summaryCard}>
-                  <View style={styles.summaryCardContent}>
-                    <View style={styles.summaryHeader}>
-                      <View style={[styles.summaryIcon, { backgroundColor: Colors.primary + '30' }]}>
-                        <Ionicons name="leaf" size={20} color={Colors.primary} />
-                      </View>
-                      <View style={styles.summaryHeaderText}>
-                        <Text style={styles.summaryLabel}>Dietary Preferences</Text>
-                        <Text style={styles.summaryValue}>
-                          {selectedDietaryOptions.map(option => option.label).join(', ')}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.optionsList}>
-                      {selectedDietaryOptions.map(option => (
-                        <View key={option.id} style={styles.optionItem}>
-                          <Text style={styles.optionEmoji}>{option.icon}</Text>
-                          <Text style={styles.optionText}>{option.label}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {selectedAllergyOptions.length > 0 && (
-                <View style={styles.summaryCard}>
-                  <View style={styles.summaryCardContent}>
-                    <View style={styles.summaryHeader}>
-                      <View style={[styles.summaryIcon, { backgroundColor: Colors.warning + '30' }]}>
-                        <Ionicons name="warning" size={20} color={Colors.warning} />
-                      </View>
-                      <View style={styles.summaryHeaderText}>
-                        <Text style={styles.summaryLabel}>Allergies & Restrictions</Text>
-                        <Text style={styles.summaryValue}>
-                          {selectedAllergyOptions.map(option => option.label).join(', ')}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.optionsList}>
-                      {selectedAllergyOptions.map(option => (
-                        <View key={option.id} style={styles.optionItem}>
-                          <Text style={styles.optionEmoji}>{option.icon}</Text>
-                          <Text style={styles.optionText}>{option.label}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {selectedDietaryOptions.length === 0 && selectedAllergyOptions.length === 0 && (
-                <View style={styles.summaryCard}>
-                  <View style={styles.summaryCardContent}>
-                    <View style={styles.summaryHeader}>
-                      <View style={[styles.summaryIcon, { backgroundColor: Colors.success + '30' }]}>
-                        <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-                      </View>
-                      <View style={styles.summaryHeaderText}>
-                        <Text style={styles.summaryLabel}>Preferences</Text>
-                        <Text style={styles.summaryValue}>No restrictions</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.summaryDescription}>
-                      You'll have access to all available menu items!
-                    </Text>
-                  </View>
-                </View>
-              )}
+              <View style={styles.profileItem}>
+                <Text style={styles.profileLabel}>Age</Text>
+                <Text style={styles.profileValue}>{age}</Text>
+              </View>
+              <View style={styles.profileItem}>
+                <Text style={styles.profileLabel}>Height</Text>
+                <Text style={styles.profileValue}>{formatHeight()}</Text>
+              </View>
+              <View style={styles.profileItem}>
+                <Text style={styles.profileLabel}>Weight</Text>
+                <Text style={styles.profileValue}>{formatWeight()}</Text>
+              </View>
             </View>
           </View>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.finishButton, isLoading && styles.disabledButton]}
-            onPress={handleFinishSetup}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryDark]}
-              style={styles.buttonGradient}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color={Colors.textLight} />
-              ) : (
-                <> 
           
-                  <Text style={styles.buttonText}>Start Planning My Meals</Text>
-                  <Ionicons name="restaurant" size={20} color={Colors.textLight} style={styles.buttonIcon} />
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+          {/* Goal Section */}
+          {goal && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionIcon, { backgroundColor: goal.color + '15' }]}>
+                  <Text style={styles.sectionEmoji}>{goal.icon}</Text>
+                </View>
+                <View style={styles.sectionHeaderText}>
+                  <Text style={styles.sectionTitle}>Your Goal</Text>
+                  <Text style={[styles.sectionValue, { color: goal.color }]}>{goal.title}</Text>
+                </View>
+              </View>
+              <Text style={styles.sectionDescription}>{goal.description}</Text>
+            </View>
+          )}
+
+          {/* Activity Level Section */}
+          {selectedActivityLevel && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderSimple}>
+                <Text style={styles.sectionTitle}>Activity Level</Text>
+              </View>
+              <Text style={styles.sectionValue}>{selectedActivityLevel.title}</Text>
+            </View>
+          )}
+
+          {/* Dietary Preferences Section */}
+          {selectedDietaryOptions.length > 0 && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderSimple}>
+                <Text style={styles.sectionTitle}>Dietary Preferences</Text>
+              </View>
+              <View style={styles.preferencesGrid}>
+                {selectedDietaryOptions.map(option => (
+                  <View key={option.id} style={styles.preferenceTag}>
+                    <Text style={styles.preferenceTagText}>{option.icon} {option.label}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Allergies Section */}
+          {selectedAllergyOptions.length > 0 && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderSimple}>
+                <Text style={styles.sectionTitle}>Allergies & Restrictions</Text>
+              </View>
+              <View style={styles.preferencesGrid}>
+                {selectedAllergyOptions.map(option => (
+                  <View key={option.id} style={[styles.preferenceTag, styles.allergyTag]}>
+                    <Text style={[styles.preferenceTagText, styles.allergyTagText]}>{option.icon} {option.label}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* No Restrictions Section */}
+          {selectedDietaryOptions.length === 0 && selectedAllergyOptions.length === 0 && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderSimple}>
+                <Text style={styles.sectionTitle}>Dietary Preferences</Text>
+                <Text style={[styles.sectionValue, { color: Colors.success }]}>No restrictions</Text>
+              </View>
+              <Text style={styles.sectionDescription}>
+                You'll have access to all available menu items!
+              </Text>
+            </View>
+          )}
         </View>
-      </LinearGradient>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  background: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 16,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
-  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
+    paddingBottom: 100,
   },
   content: {
     flex: 1,
+    paddingTop: 40,
   },
-  celebrationContainer: {
+  headerContainer: {
     alignItems: 'center',
-    paddingVertical: 32,
-  },
-  celebrationEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: 12,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
@@ -245,108 +200,100 @@ const styles = StyleSheet.create({
   },
   summaryContainer: {
     flex: 1,
+    gap: 16,
   },
-  summaryCard: {
-    marginBottom: 16,
+  profileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  profileItem: {
+    width: '48%',
+    marginBottom: 12,
+  },
+  profileLabel: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  profileValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  sectionCard: {
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
-    overflow: 'hidden',
+    padding: 20,
     elevation: 2,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
-  summaryCardGradient: {
-    padding: 20,
-  },
-  summaryCardContent: {
-    backgroundColor: Colors.surface,
-    padding: 20,
-  },
-  summaryHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionHeaderSimple: {
     marginBottom: 12,
   },
-  summaryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  sectionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
-  summaryIconText: {
-    fontSize: 24,
+  sectionEmoji: {
+    fontSize: 22,
   },
-  summaryHeaderText: {
+  sectionHeaderText: {
     flex: 1,
   },
-  summaryLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-    marginBottom: 4,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 2,
   },
-  summaryValue: {
+  sectionValue: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.text,
   },
-  summaryDescription: {
+  sectionCount: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  sectionDescription: {
     fontSize: 14,
     color: Colors.textSecondary,
     lineHeight: 20,
-    marginTop: 8,
   },
-  optionsList: {
+  preferencesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 8,
+    gap: 8,
   },
-  optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 12,
+  preferenceTag: {
+    backgroundColor: Colors.primary + '20',
+    borderRadius: 8,
     paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
+    paddingHorizontal: 12,
   },
-  optionEmoji: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  optionText: {
-    fontSize: 14,
+  preferenceTagText: {
     color: Colors.primary,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  footer: {
-    padding: 24,
-    paddingBottom: 32,
+  allergyTag: {
+    backgroundColor: Colors.warning + '20',
   },
-  finishButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  disabledButton: {
-    opacity: 0.7,
-  },
-  buttonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    paddingHorizontal: 24,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textLight,
-  },
-  buttonIcon: {
-    marginLeft: 8,
+  allergyTagText: {
+    color: Colors.warning,
   },
 });

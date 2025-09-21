@@ -11,28 +11,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../context/OnboardingContext';
 
 import { Colors } from '../../constants/Colors';
-import { dietaryOptions } from '../../data/mockData';
+import { allergenOptions } from '../../data/mockData';
 
-export default function DietaryPreferencesScreen() {
+export default function AllergiesScreen() {
   const { onboardingData, updateOnboardingData } = useOnboarding();
-  const [selectedDietaryPreferences, setSelectedDietaryPreferences] = useState(onboardingData.dietaryPreferences);
+  const [selectedAllergies, setSelectedAllergies] = useState(onboardingData.allergies);
 
   useEffect(() => {
-    updateOnboardingData({ dietaryPreferences: selectedDietaryPreferences });
-  }, [selectedDietaryPreferences]);
+    updateOnboardingData({ allergies: selectedAllergies });
+  }, [selectedAllergies]);
 
-  const toggleDietaryPreference = (preference) => {
-    setSelectedDietaryPreferences(prev => {
-      if (prev.includes(preference.id)) {
-        return prev.filter(id => id !== preference.id);
+  const toggleAllergy = (allergy) => {
+    setSelectedAllergies(prev => {
+      if (prev.includes(allergy.id)) {
+        return prev.filter(id => id !== allergy.id);
       } else {
-        return [...prev, preference.id];
+        return [...prev, allergy.id];
       }
     });
   };
 
-
-  const renderOptionCard = (option, isSelected, onToggle, color = Colors.primary) => (
+  const renderOptionCard = (option, isSelected, onToggle, color = Colors.warning) => (
     <TouchableOpacity
       key={option.id}
       style={[
@@ -64,17 +63,17 @@ export default function DietaryPreferencesScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <View style={styles.content}>
-        <Text style={styles.title}>Dietary Preferences</Text>
+        <Text style={styles.title}>Allergies & Restrictions</Text>
         <Text style={styles.subtitle}>Select any that apply to you</Text>
 
         <View style={styles.section}>
           <View style={styles.optionsGrid}>
-            {dietaryOptions.map(option => 
+            {allergenOptions.map(option => 
               renderOptionCard(
                 option, 
-                selectedDietaryPreferences.includes(option.id), 
-                toggleDietaryPreference,
-                Colors.primary
+                selectedAllergies.includes(option.id), 
+                toggleAllergy,
+                Colors.warning
               )
             )}
           </View>
@@ -108,19 +107,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 16,
   },
   optionsGrid: {
     flexDirection: 'row',

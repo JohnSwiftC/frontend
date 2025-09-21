@@ -187,12 +187,12 @@ export default function TodaysPlanScreen() {
       Animated.timing(slideX, {
         toValue: sign * screenWidth,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(nextSlideX, {
         toValue: 0,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     ]).start(() => {
       // Update the date
