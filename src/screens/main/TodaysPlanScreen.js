@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import Swiper from 'react-native-swiper';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -31,6 +32,12 @@ export default function TodaysPlanScreen() {
   useEffect(() => {
     loadUserDataAndGeneratePlan(currentDate);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadUserDataAndGeneratePlan(currentDate);
+    }, [currentDate])
+  );
 
   const formatDateKey = (dateObj) => {
     const y = dateObj.getFullYear();

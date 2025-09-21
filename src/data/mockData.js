@@ -1,3 +1,5 @@
+import { Colors } from '../constants/Colors';
+
 export const diningCourts = [
   {
     id: 'earhart',
@@ -23,6 +25,44 @@ export const diningCourts = [
     location: 'Near Windsor Halls',
     hours: '7:00 AM - 10:00 PM',
   }
+];
+
+export const activityLevels = [
+  { 
+    id: 'sedentary', 
+    title: 'Sedentary', 
+    description: 'Little to no exercise',
+    icon: '🛋️',
+    color: Colors.textSecondary
+  },
+  { 
+    id: 'lightly_active', 
+    title: 'Lightly Active', 
+    description: 'Light exercise 1-3 days/week',
+    icon: '🚶',
+    color: Colors.primary
+  },
+  { 
+    id: 'moderately_active', 
+    title: 'Moderately Active', 
+    description: 'Moderate exercise 3-5 days/week',
+    icon: '🏃',
+    color: Colors.primary
+  },
+  { 
+    id: 'very_active', 
+    title: 'Very Active', 
+    description: 'Heavy exercise 6-7 days/week',
+    icon: '💪',
+    color: Colors.primary
+  },
+  { 
+    id: 'extra_active', 
+    title: 'Extra Active', 
+    description: 'Very heavy exercise, physical job',
+    icon: '🔥',
+    color: Colors.warning
+  },
 ];
 
 export const mockMenuItems = [
@@ -177,29 +217,8 @@ export const mockMenuItems = [
   },
 ];
 
-export const mockUserProfiles = {
-  loseWeight: {
-    goal: 'Lose Weight',
-    targetCalories: 1800,
-    targetProtein: 135,
-    targetCarbs: 180,
-    targetFat: 60,
-  },
-  maintain: {
-    goal: 'Maintain',
-    targetCalories: 2200,
-    targetProtein: 165,
-    targetCarbs: 275,
-    targetFat: 73,
-  },
-  gainMuscle: {
-    goal: 'Gain Muscle',
-    targetCalories: 2600,
-    targetProtein: 195,
-    targetCarbs: 325,
-    targetFat: 87,
-  },
-};
+// Deprecated: static profiles were replaced by dynamic targets computed from physical profile
+export const mockUserProfiles = {};
 
 export const dietaryOptions = [
   { id: 'vegetarian', label: 'Vegetarian', icon: '🥬' },

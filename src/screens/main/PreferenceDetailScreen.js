@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';
-import { goalOptions, dietaryOptions, allergenOptions } from '../../data/mockData';
+import { goalOptions, dietaryOptions, allergenOptions, activityLevels } from '../../data/mockData';
 
 export default function PreferenceDetailScreen({ navigation, route }) {
   const { type, currentValue, onSave } = route.params;
@@ -23,6 +23,7 @@ export default function PreferenceDetailScreen({ navigation, route }) {
   const getTitle = () => {
     switch (type) {
       case 'goal': return 'Goal';
+      case 'activity': return 'Activity Level';
       case 'dietary': return 'Dietary Preferences';
       case 'allergies': return 'Allergies & Restrictions';
       default: return 'Preferences';
@@ -32,6 +33,7 @@ export default function PreferenceDetailScreen({ navigation, route }) {
   const getOptions = () => {
     switch (type) {
       case 'goal': return goalOptions;
+      case 'activity': return activityLevels;
       case 'dietary': return dietaryOptions;
       case 'allergies': return allergenOptions;
       default: return [];
@@ -61,10 +63,28 @@ export default function PreferenceDetailScreen({ navigation, route }) {
       // Get current profile
       const profile = await storage.getUserProfile();
       
+      let key;
+      switch (type) {
+        case 'goal':
+          key = 'goal';
+          break;
+        case 'activity':
+          key = 'activityLevel';
+          break;
+        case 'dietary':
+          key = 'dietaryPreferences';
+          break;
+        case 'allergies':
+          key = 'allergies';
+          break;
+        default:
+          throw new Error(`Unknown preference type: ${type}`);
+      }
+
       // Update the specific preference
       const updatedProfile = {
         ...profile,
-        [type === 'dietary' ? 'dietaryPreferences' : type === 'allergies' ? 'allergies' : 'goal']: selectedValue
+        [key]: selectedValue
       };
       
       // Save updated profile
@@ -82,39 +102,44 @@ export default function PreferenceDetailScreen({ navigation, route }) {
     }
   };
 
-  const renderGoalOptions = () => (
-    <View style={styles.optionsContainer}>
-      {goalOptions.map(option => (
-        <TouchableOpacity
-          key={option.id}
-          style={[
-            styles.goalOption,
-            selectedValue === option.id && styles.selectedGoalOption
-          ]}
-          onPress={() => handleOptionPress(option.id)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.goalOptionGradient, { backgroundColor: selectedValue === option.id ? (option.color + '20') : Colors.surface }] }>
-            <View style={[styles.goalIcon, { backgroundColor: option.color }]}>
-              <Text style={{ fontSize: 18 }}>{option.icon}</Text>
+  const renderSingleSelectOptions = () => {
+    const options = getOptions();
+    const isGoal = type === 'goal';
+
+    return (
+      <View style={styles.optionsContainer}>
+        {options.map(option => (
+          <TouchableOpacity
+            key={option.id}
+            style={[
+              styles.goalOption,
+              selectedValue === option.id && styles.selectedGoalOption
+            ]}
+            onPress={() => handleOptionPress(option.id)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.goalOptionGradient, { backgroundColor: selectedValue === option.id ? (option.color + '20') : Colors.surface }] }>
+              <View style={[styles.goalIcon, { backgroundColor: isGoal ? option.color : 'transparent' }]}>
+                <Text style={{ fontSize: 18 }}>{option.icon}</Text>
+              </View>
+              <View style={styles.goalContent}>
+                <Text style={[
+                  styles.goalTitle,
+                  selectedValue === option.id && { color: option.color }
+                ]}>
+                  {option.title}
+                </Text>
+                <Text style={styles.goalDescription}>{option.description}</Text>
+              </View>
+              {selectedValue === option.id && (
+                <Ionicons name="checkmark-circle" size={24} color={option.color} />
+              )}
             </View>
-            <View style={styles.goalContent}>
-              <Text style={[
-                styles.goalTitle,
-                selectedValue === option.id && { color: option.color }
-              ]}>
-                {option.title}
-              </Text>
-              <Text style={styles.goalDescription}>{option.description}</Text>
-            </View>
-            {selectedValue === option.id && (
-              <Ionicons name="checkmark-circle" size={24} color={option.color} />
-            )}
-          </View>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+          </TouchableOpacity>
+        ))}
+      </View>
+    )
+  };
 
   const renderMultiSelectOptions = () => {
     const options = getOptions();
@@ -185,7 +210,7 @@ export default function PreferenceDetailScreen({ navigation, route }) {
 
         <View style={styles.content}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {type === 'goal' ? renderGoalOptions() : renderMultiSelectOptions()}
+            {isMultiSelect() ? renderMultiSelectOptions() : renderSingleSelectOptions()}
           </ScrollView>
         </View>
       </View>

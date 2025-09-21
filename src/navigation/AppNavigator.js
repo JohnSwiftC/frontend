@@ -6,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import OnboardingNavigator from './OnboardingNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import PreferenceDetailScreen from '../screens/main/PreferenceDetailScreen';
+import PhysicalProfileDetailScreen from '../screens/main/PhysicalProfileDetailScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 import { storage } from '../utils/AsyncStorage';
 import { Colors } from '../constants/Colors';
@@ -55,6 +56,19 @@ export default function AppNavigator() {
             <Stack.Screen 
               name="PreferenceDetail" 
               component={PreferenceDetailScreen}
+              options={{
+                headerShown: false,
+                gestureEnabled: true,
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+                transitionSpec: {
+                  open: { animation: 'timing', config: { duration: 180 } },
+                  close: { animation: 'timing', config: { duration: 180 } },
+                },
+              }}
+            />
+            <Stack.Screen 
+              name="PhysicalProfileDetail" 
+              component={PhysicalProfileDetailScreen}
               options={{
                 headerShown: false,
                 gestureEnabled: true,

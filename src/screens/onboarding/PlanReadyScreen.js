@@ -15,13 +15,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';
 import { generateMealPlan } from '../../utils/MealPlanner';
-import { diningCourts, goalOptions, dietaryOptions, allergenOptions } from '../../data/mockData';
+import { goalOptions, dietaryOptions, allergenOptions } from '../../data/mockData';
 import { useOnboarding } from '../../context/OnboardingContext';
 
 
 export default function PlanReadyScreen({ onComplete }) {
   const { onboardingData } = useOnboarding();
-  const { goal, dietaryPreferences, allergies } = onboardingData;
+  const { goal, dietaryPreferences, allergies, sex, age, height, weight, activityLevel, unitSystem } = onboardingData;
   const [mealPlan, setMealPlan] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
@@ -39,6 +39,12 @@ export default function PlanReadyScreen({ onComplete }) {
           goalDetails: goal,
           dietaryPreferences,
           allergies,
+          sex,
+          age,
+          height,
+          weight,
+          activityLevel,
+          unitSystem,
           createdAt: new Date().toISOString(),
         };
 
@@ -82,60 +88,7 @@ export default function PlanReadyScreen({ onComplete }) {
     });
   };
 
-  const getDiningCourtInfo = (diningCourtId) => {
-    return diningCourts.find(court => court.id === diningCourtId) || { name: 'Unknown Court', location: '' };
-  };
 
-  const getMealTypeColor = (mealType) => {
-    switch (mealType) {
-      case 'breakfast': return Colors.breakfast || Colors.primary;
-      case 'lunch': return Colors.lunch || Colors.secondary;
-      case 'dinner': return Colors.dinner || Colors.accent;
-      default: return Colors.primary;
-    }
-  };
-
-  const getMealTypeIcon = (mealType) => {
-    switch (mealType) {
-      case 'breakfast': return 'sunny';
-      case 'lunch': return 'partly-sunny';
-      case 'dinner': return 'moon';
-      default: return 'restaurant';
-    }
-  };
-
-  const renderMealCard = (mealType, meal) => {
-    if (!meal) return null;
-
-    const color = getMealTypeColor(mealType);
-    const icon = getMealTypeIcon(mealType);
-    const diningCourt = getDiningCourtInfo(meal.diningCourt);
-
-    return (
-      <View key={mealType} style={styles.mealCard}>
-        <LinearGradient
-          colors={['#F5F5F5', '#F5F5F5']}
-          style={styles.mealCardGradient}
-        >
-          <View style={styles.mealHeader}>
-            <View style={[styles.mealIcon, { backgroundColor: color + '20' }]}>
-              <Ionicons name={icon} size={20} color={color} />
-            </View>
-            <View style={styles.mealInfo}>
-              <Text style={styles.mealType}>
-                {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-              </Text>
-              <Text style={styles.mealName}>{meal.name}</Text>
-            </View>
-            <View style={styles.nutritionSummary}>
-              <Text style={styles.calories}>{meal.calories}</Text>
-              <Text style={styles.caloriesLabel}>cal</Text>
-            </View>
-          </View>
-        </LinearGradient>
-      </View>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -160,56 +113,52 @@ export default function PlanReadyScreen({ onComplete }) {
                 </LinearGradient>
               </View>
 
-              <Text style={styles.successTitle}>Your meal plan is ready!</Text>
+              <Text style={styles.successTitle}>Your nutrition targets are set!</Text>
               <Text style={styles.successSubtitle}>
-                We've crafted a personalized daily plan based on your preferences and goals.
+                Based on your profile, we've calculated your daily nutrition goals and created your first meal plan.
               </Text>
             </View>
 
             {mealPlan && (
-              <View style={styles.planPreview}>
-                <Text style={styles.planTitle}>Today's Plan Preview</Text>
-                
+              <View style={styles.nutritionTargetsSection}>
                 <View style={styles.nutritionOverview}>
                   <LinearGradient
-                    colors={[Colors.primary, Colors.primaryDark]}
+                    colors={[Colors.success, Colors.success + 'DD']}
                     style={styles.nutritionGradient}
                   >
-                    <Text style={styles.nutritionTitle}>Daily Nutrition</Text>
-                    <View style={styles.nutritionRow}>
-                      <View style={styles.nutritionItem}>
-                        <Text style={styles.nutritionValue}>
-                          {Math.round(mealPlan.totalNutrition.calories)}
-                        </Text>
-                        <Text style={styles.nutritionLabel}>Calories</Text>
+                    <View style={styles.nutritionGrid}>
+                      <View style={styles.nutritionGridRow}>
+                        <View style={styles.nutritionGridItem}>
+                          <Text style={styles.nutritionValue}>
+                            {Math.round(mealPlan.targets.targetCalories)}
+                          </Text>
+                          <Text style={styles.nutritionLabel}>Calories</Text>
+                        </View>
+                        <View style={styles.nutritionGridItem}>
+                          <Text style={styles.nutritionValue}>
+                            {Math.round(mealPlan.targets.targetProtein)}g
+                          </Text>
+                          <Text style={styles.nutritionLabel}>Protein</Text>
+                        </View>
                       </View>
-                      <View style={styles.nutritionItem}>
-                        <Text style={styles.nutritionValue}>
-                          {Math.round(mealPlan.totalNutrition.protein)}g
-                        </Text>
-                        <Text style={styles.nutritionLabel}>Protein</Text>
-                      </View>
-                      <View style={styles.nutritionItem}>
-                        <Text style={styles.nutritionValue}>
-                          {Math.round(mealPlan.totalNutrition.carbs)}g
-                        </Text>
-                        <Text style={styles.nutritionLabel}>Carbs</Text>
-                      </View>
-                      <View style={styles.nutritionItem}>
-                        <Text style={styles.nutritionValue}>
-                          {Math.round(mealPlan.totalNutrition.fat)}g
-                        </Text>
-                        <Text style={styles.nutritionLabel}>Fat</Text>
+                      <View style={styles.nutritionGridRow}>
+                        <View style={styles.nutritionGridItem}>
+                          <Text style={styles.nutritionValue}>
+                            {Math.round(mealPlan.targets.targetCarbs)}g
+                          </Text>
+                          <Text style={styles.nutritionLabel}>Carbs</Text>
+                        </View>
+                        <View style={styles.nutritionGridItem}>
+                          <Text style={styles.nutritionValue}>
+                            {Math.round(mealPlan.targets.targetFat)}g
+                          </Text>
+                          <Text style={styles.nutritionLabel}>Fat</Text>
+                        </View>
                       </View>
                     </View>
                   </LinearGradient>
                 </View>
-
-                <View style={styles.mealsPreview}>
-                  {renderMealCard('breakfast', mealPlan.meals.breakfast)}
-                  {renderMealCard('lunch', mealPlan.meals.lunch)}
-                  {renderMealCard('dinner', mealPlan.meals.dinner)}
-                </View>
+                <Text style={styles.perDayText}>PER DAY</Text>
               </View>
             )}
           </ScrollView>
@@ -225,7 +174,7 @@ export default function PlanReadyScreen({ onComplete }) {
               colors={[Colors.success, Colors.success + 'DD']}
               style={styles.buttonGradient}
             >
-              <Text style={styles.buttonText}>Start My Journey</Text>
+              <Text style={styles.buttonText}>View My Meals</Text>
               <Ionicons name="arrow-forward" size={20} color={Colors.textLight} style={styles.buttonIcon} />
             </LinearGradient>
           </TouchableOpacity>
@@ -269,7 +218,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
   },
   successTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: 12,
@@ -281,20 +230,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
+    marginBottom: 2,
   },
-  planPreview: {
-    flex: 1,
-    marginTop: 16,
-  },
-  planTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 20,
-    textAlign: 'center',
+  nutritionTargetsSection: {
+    marginTop: 0,
+    justifyContent: 'center',
   },
   nutritionOverview: {
-    marginBottom: 24,
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 4,
@@ -302,90 +244,52 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
+    marginHorizontal: 16,
   },
   nutritionGradient: {
-    padding: 20,
-  },
-  nutritionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.textLight,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  nutritionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  nutritionItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  nutritionValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.textLight,
-  },
-  nutritionLabel: {
-    fontSize: 12,
-    color: Colors.textLight,
-    marginTop: 2,
-    opacity: 0.9,
-  },
-  mealsPreview: {
-    gap: 12,
-  },
-  mealCard: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  mealCardGradient: {
     padding: 16,
   },
-  mealHeader: {
+  nutritionGrid: {
+    gap: 8,
+  },
+  nutritionGridRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  mealIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  mealInfo: {
+  nutritionGridItem: {
     flex: 1,
-  },
-  mealType: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: 2,
-  },
-  mealName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  nutritionSummary: {
     alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 10,
+    marginHorizontal: 6,
+    minHeight: 75,
+    justifyContent: 'center',
   },
-  calories: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  nutritionValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.textLight,
+    marginBottom: 4,
+  },
+  nutritionLabel: {
+    fontSize: 13,
+    color: Colors.textLight,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+    opacity: 0.9,
+  },
+  perDayText: {
+    fontSize: 16,
     color: Colors.text,
-  },
-  caloriesLabel: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    marginTop: 2,
+    textAlign: 'center',
+    marginTop: 20,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   footer: {
     padding: 24,

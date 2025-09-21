@@ -11,44 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useOnboarding } from '../../context/OnboardingContext';
 
 import { Colors } from '../../constants/Colors';
-
-const activityLevels = [
-  { 
-    id: 'sedentary', 
-    title: 'Sedentary', 
-    description: 'Little to no exercise',
-    icon: '🛋️',
-    color: Colors.textSecondary
-  },
-  { 
-    id: 'lightly_active', 
-    title: 'Lightly Active', 
-    description: 'Light exercise 1-3 days/week',
-    icon: '🚶',
-    color: Colors.primary
-  },
-  { 
-    id: 'moderately_active', 
-    title: 'Moderately Active', 
-    description: 'Moderate exercise 3-5 days/week',
-    icon: '🏃',
-    color: Colors.primary
-  },
-  { 
-    id: 'very_active', 
-    title: 'Very Active', 
-    description: 'Heavy exercise 6-7 days/week',
-    icon: '💪',
-    color: Colors.primary
-  },
-  { 
-    id: 'extra_active', 
-    title: 'Extra Active', 
-    description: 'Very heavy exercise, physical job',
-    icon: '🔥',
-    color: Colors.warning
-  },
-];
+import { activityLevels } from '../../data/mockData';
 
 export default function ActivityLevelScreen() {
   const { onboardingData, updateOnboardingData } = useOnboarding();

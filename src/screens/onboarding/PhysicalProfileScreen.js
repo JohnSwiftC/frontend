@@ -29,7 +29,7 @@ const IN_IN_CM = 2.54;
 export default function PhysicalProfileScreen() {
   const { onboardingData, updateOnboardingData } = useOnboarding();
   const [sex, setSex] = useState(onboardingData.sex || 'male');
-  const [age, setAge] = useState(onboardingData.age || 30);
+  const [age, setAge] = useState(onboardingData.age || 18);
   const [height, setHeight] = useState(onboardingData.height || 175);
   const [weight, setWeight] = useState(onboardingData.weight || 75);
   const [unitSystem, setUnitSystem] = useState(onboardingData.unitSystem || 'metric');
