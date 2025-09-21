@@ -61,16 +61,7 @@ export default function TodaysPlanScreen() {
     }
   };
 
-  // Do NOT auto-generate on date change; only generate when user taps
-  // "Generate New Plan" or initial load for today
-  useEffect(() => {
-    if (!userProfile) return;
-    const todayKey = formatDateKey(new Date());
-    if (!plansByDate[todayKey]) {
-      const plan = generateMealPlan(userProfile);
-      setPlansByDate(prev => ({ ...prev, [todayKey]: plan }));
-    }
-  }, [userProfile]);
+  // Initial plan is generated in loadUserDataAndGeneratePlan on mount
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -222,13 +213,66 @@ export default function TodaysPlanScreen() {
   };
   
   const handlePrevDay = () => {
-    if (isToday()) return; // Don't allow going to previous day if current date is today
     animateToDate('prev');
   };
   const handleNextDay = () => animateToDate('next');
 
   const dateKey = formatDateKey(currentDate);
   const currentPlan = plansByDate[dateKey] || null;
+
+  // Component for rendering a single day's content
+  const DayPlanView = ({ plan, onGenerate, isCurrentDay = false }) => {
+    if (!plan) {
+      return (
+        <View style={styles.noDataContainer}>
+          <View style={styles.noDataContent}>
+            <Ionicons name="calendar-outline" size={64} color={Colors.textSecondary} />
+            <Text style={styles.noDataTitle}>No Plan Generated</Text>
+            <Text style={styles.noDataSubtitle}>
+              Generate a meal plan for {isCurrentDay ? getRelativeDayPrefix(currentDate) : 'this day'}
+            </Text>
+            <TouchableOpacity
+              style={styles.generateButton}
+              onPress={onGenerate}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[Colors.primary, Colors.primaryDark]}
+                style={styles.generateGradient}
+              >
+                <Ionicons name="add-circle" size={24} color={Colors.textLight} />
+                <Text style={styles.generateText}>Generate New Plan</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        {isCurrentDay ? renderNutritionSummary() : renderNutritionSummaryForPlan(plan)}
+        <View style={styles.mealsContainer}>
+          {renderMealCard('breakfast', plan.meals.breakfast)}
+          {renderMealCard('lunch', plan.meals.lunch)}
+          {renderMealCard('dinner', plan.meals.dinner)}
+        </View>
+        <TouchableOpacity
+          style={styles.regenerateButton}
+          onPress={onGenerate}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={[Colors.secondary, Colors.secondaryDark]}
+            style={styles.regenerateGradient}
+          >
+            <Ionicons name="refresh-circle" size={24} color={Colors.textLight} />
+            <Text style={styles.regenerateText}>Generate New Plan</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </>
+    );
+  };
 
   const renderNutritionSummaryForPlan = (plan) => {
     if (!plan || !plan.totalNutrition || !plan.targets) return null;
@@ -403,6 +447,13 @@ export default function TodaysPlanScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+        stickyHeaderIndices={[1]}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.greeting}>Meal Plan</Text>
         </View>
@@ -454,112 +505,16 @@ export default function TodaysPlanScreen() {
           </View>
         </View>
 
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-          }
-        >
         <View style={styles.contentContainer}>
           {/* Current content (animated) */}
           <Animated.View style={[styles.contentView, { transform: [{ translateX: slideX }] }]}>
-            {currentPlan ? (
-              <>
-                {renderNutritionSummary()}
-
-                <View style={styles.mealsContainer}>
-                  {renderMealCard('breakfast', currentPlan.meals.breakfast)}
-                  {renderMealCard('lunch', currentPlan.meals.lunch)}
-                  {renderMealCard('dinner', currentPlan.meals.dinner)}
-                </View>
-
-                <TouchableOpacity
-                  style={styles.regenerateButton}
-                  onPress={handleRefresh}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={[Colors.secondary, Colors.secondaryDark]}
-                    style={styles.regenerateGradient}
-                  >
-                    <Ionicons name="refresh-circle" size={24} color={Colors.textLight} />
-                    <Text style={styles.regenerateText}>Generate New Plan</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.noDataContainer}>
-                <View style={styles.noDataContent}>
-                  <Ionicons name="calendar-outline" size={64} color={Colors.textSecondary} />
-                  <Text style={styles.noDataTitle}>No Plan Generated</Text>
-                  <Text style={styles.noDataSubtitle}>Generate a meal plan for {getRelativeDayPrefix(currentDate)}</Text>
-                  <TouchableOpacity
-                    style={styles.generateButton}
-                    onPress={handleRefresh}
-                    activeOpacity={0.8}
-                  >
-                    <LinearGradient
-                      colors={[Colors.primary, Colors.primaryDark]}
-                      style={styles.generateGradient}
-                    >
-                      <Ionicons name="add-circle" size={24} color={Colors.textLight} />
-                      <Text style={styles.generateText}>Generate New Plan</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            <DayPlanView plan={currentPlan} onGenerate={handleRefresh} isCurrentDay={true} />
           </Animated.View>
           
           {/* Next content (for animation) */}
           {animatingDirection && (
             <Animated.View style={[styles.contentView, styles.nextContentView, { transform: [{ translateX: nextSlideX }] }]}>
-              {nextDatePlan ? (
-                <>
-                  {renderNutritionSummaryForPlan(nextDatePlan)}
-
-                  <View style={styles.mealsContainer}>
-                    {renderMealCard('breakfast', nextDatePlan.meals.breakfast)}
-                    {renderMealCard('lunch', nextDatePlan.meals.lunch)}
-                    {renderMealCard('dinner', nextDatePlan.meals.dinner)}
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.regenerateButton}
-                    onPress={handleRefresh}
-                    activeOpacity={0.8}
-                  >
-                    <LinearGradient
-                      colors={[Colors.secondary, Colors.secondaryDark]}
-                      style={styles.regenerateGradient}
-                    >
-                      <Ionicons name="refresh-circle" size={24} color={Colors.textLight} />
-                      <Text style={styles.regenerateText}>Generate New Plan</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <View style={styles.noDataContainer}>
-                  <View style={styles.noDataContent}>
-                    <Ionicons name="calendar-outline" size={64} color={Colors.textSecondary} />
-                    <Text style={styles.noDataTitle}>No Plan Generated</Text>
-                    <Text style={styles.noDataSubtitle}>Generate a meal plan for this day</Text>
-                    <TouchableOpacity
-                      style={styles.generateButton}
-                      onPress={handleRefresh}
-                      activeOpacity={0.8}
-                    >
-                      <LinearGradient
-                        colors={[Colors.primary, Colors.primaryDark]}
-                        style={styles.generateGradient}
-                      >
-                        <Ionicons name="add-circle" size={24} color={Colors.textLight} />
-                        <Text style={styles.generateText}>Generate New Plan</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
+              <DayPlanView plan={nextDatePlan} onGenerate={() => {}} isCurrentDay={false} />
             </Animated.View>
           )}
         </View>
