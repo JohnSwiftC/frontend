@@ -59,7 +59,7 @@ export default function MealCard({ mealType, meal, onSwapMeal, swappingMeal, get
       
       <View style={styles.mealContent}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-          <Text style={{marginLeft: -30, fontSize: 13, color: Colors.textSecondary}}>⬤</Text><Text style={styles.mealName}>{meal.name}</Text>
+          <Text style={{left: -28.9, position: 'absolute', fontSize: 13, color: Colors.textSecondary}}>⬤</Text><Text style={styles.mealName}>{meal.name}</Text>
         </View>
         {/* <Text style={styles.diningCourtLocation}>{diningCourt.location}</Text> */}
         
