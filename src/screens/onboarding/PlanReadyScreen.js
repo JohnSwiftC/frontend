@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { computeNutritionTargets } from '../../utils/MealPlanner'
+import { sendUserMacros } from '../../../index';
 
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';

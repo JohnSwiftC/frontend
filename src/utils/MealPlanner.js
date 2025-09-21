@@ -22,7 +22,7 @@ export const generateMealPlan = async (userProfile = {}, excludedItems = []) => 
   }
 
   // Check for day 0 recommendations
-  const dayZeroRecs = recommendations?.["0"] || recommendations?.[0];
+  const dayZeroRecs = recommendations?.["1"] || recommendations?.[1];
   console.log('MealPlanner - Day 0 recommendations:', dayZeroRecs);
   
   let selectedMeals = {

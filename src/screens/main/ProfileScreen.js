@@ -45,14 +45,23 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  const targets = useMemo(() => {
-    if (!userProfile) return null;
-    try {
-      const plan = generateMealPlan(userProfile);
-      return plan?.targets || null;
-    } catch (e) {
-      return null;
-    }
+  const [targets, setTargets] = useState(null);
+
+  useEffect(() => {
+    const fetchTargets = async () => {
+      if (!userProfile) {
+        setTargets(null);
+        return;
+      }
+      try {
+        const plan = await generateMealPlan(userProfile);
+        console.log("Calculated targets:", plan);
+        setTargets(plan?.targets || null);
+      } catch (e) {
+        setTargets(null);
+      }
+    };
+    fetchTargets();
   }, [userProfile]);
 
   const getPhysicalProfileLabel = (profile) => {
