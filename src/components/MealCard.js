@@ -26,62 +26,45 @@ export default function MealCard({ mealType, meal, onSwapMeal, swappingMeal, get
     );
   }
 
-  const diningCourt = getDiningCourtInfo(meal.diningCourt);
+  const mealItems = Array.isArray(meal) ? meal : [meal];
+  const diningCourt = getDiningCourtInfo(mealItems[0]?.diningCourt);
 
   return (
     <>
       <View style={styles.mealHeader}>
-        <View style={styles.mealTypeContainer}>
-          {/* <View style={[styles.mealIcon, { backgroundColor: color + '20' }]}>
-            <Ionicons name={icon} size={24} color={color} />
-          </View> */}
-          <View style={styles.mealHeaderText}>
-            <Text style={styles.mealTypeTitle}>
-              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
-            </Text>
-            <Text style={styles.spacer}> • </Text>
-            <Text style={styles.diningCourtName}>{diningCourt.name}</Text>
-          </View>
-        </View>
-        {/* <TouchableOpacity
-          style={[styles.swapButton, { backgroundColor: color }]}
-          onPress={() => onSwapMeal(mealType)}
-          disabled={isSwapping}
-          activeOpacity={0.7}
-        >
-          {isSwapping ? (
-            <ActivityIndicator size="small" color={Colors.textLight} />
-          ) : (
-            <Ionicons name="refresh" size={20} color={Colors.textLight} />
-          )}
-        </TouchableOpacity> */}
+        <Text style={styles.diningCourtName}>{diningCourt.name}</Text>
       </View>
       
       <View style={styles.mealContent}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-          <Text style={{left: -28.9, position: 'absolute', fontSize: 13, color: Colors.textSecondary}}>⬤</Text><Text style={styles.mealName}>{meal.name}</Text>
-        </View>
-        {/* <Text style={styles.diningCourtLocation}>{diningCourt.location}</Text> */}
-        
-        <View style={styles.nutritionRow}>
-          <Text style={styles.nutritionBadgeText}>{meal.calories} cal</Text>
-          <Text style={styles.spacer}> • </Text>
-          <Text style={styles.nutritionBadgeText}>{meal.protein}g protein</Text>
-          <Text style={styles.spacer}> • </Text>
-          <Text style={styles.nutritionBadgeText}>{meal.carbs}g carbs</Text>
-          <Text style={styles.spacer}> • </Text>
-          <Text style={styles.nutritionBadgeText}>{meal.fat}g fat</Text>
-        </View>
+        {mealItems.map((item, index) => (
+          <View key={item.id ?? index} style={styles.mealItem}>
+            <View style={styles.mealItemHeader}>
+              <Text style={styles.mealName}>{item.name}</Text>
+            </View>
 
-        {meal.dietary && meal.dietary.length > 0 && (
-          <View style={styles.dietaryInfo}>
-            {meal.dietary.map(diet => (
-              <View key={diet} style={[styles.dietaryBadge, { backgroundColor: Colors.success + '20' }]}>
-                <Text style={[styles.dietaryText, { color: Colors.success }]}>{diet}</Text>
+            <View style={styles.mealItemDetails}>
+              <View style={styles.nutritionRow}>
+                <Text style={styles.nutritionBadgeText}>{item.calories} cal</Text>
+                <Text style={styles.spacer}> • </Text>
+                <Text style={styles.nutritionBadgeText}>{item.protein}g protein</Text>
+                <Text style={styles.spacer}> • </Text>
+                <Text style={styles.nutritionBadgeText}>{item.carbs}g carbs</Text>
+                <Text style={styles.spacer}> • </Text>
+                <Text style={styles.nutritionBadgeText}>{item.fat}g fat</Text>
               </View>
-            ))}
+
+              {item.dietary && item.dietary.length > 0 && (
+                <View style={styles.dietaryInfo}>
+                  {item.dietary.map(diet => (
+                    <View key={diet} style={[styles.dietaryBadge, { backgroundColor: Colors.success + '20' }]}>
+                      <Text style={[styles.dietaryText, { color: Colors.success }]}>{diet}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
-        )}
+        ))}
       </View>
     </>
   );
@@ -126,43 +109,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mealHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 16,
-  },
-  mealTypeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  mealIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  mealHeaderText: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center', 
-  },
-  mealTypeTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: 2,
+    marginBottom: 8,
   },
   diningCourtName: {
     fontSize: 14,
     color: Colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   spacer: {
-    fontSize: 16,
+    fontSize: 12,
     color: Colors.textSecondary,
     fontWeight: '500',
     marginHorizontal: 4,
@@ -176,13 +131,25 @@ const styles = StyleSheet.create({
   },
   mealContent: {
     marginTop: 0,
-    marginLeft: -10,
+  },
+  mealItem: {
+    paddingLeft: 0,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary + '20',
+    marginBottom: 8,
+  },
+  mealItemHeader: {
+    marginBottom: 8,
+    paddingLeft: 12,
+  },
+  mealItemDetails: {
+    paddingLeft: 12, // aligned with meal name
   },
   mealName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text,
-    marginLeft: 18,
+    flex: 1,
   },
   diningCourtLocation: {
     fontSize: 14,
@@ -190,10 +157,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   nutritionRow: {
-    marginTop: -8,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+    marginBottom: 8,
   },
   nutritionBadgeText: {
     fontSize: 12,
@@ -203,16 +170,17 @@ const styles = StyleSheet.create({
   dietaryInfo: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginTop: 4,
   },
   dietaryBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 6,
+    marginRight: 6,
+    marginBottom: 4,
   },
   dietaryText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   noMealText: {

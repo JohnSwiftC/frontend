@@ -29,13 +29,13 @@ export const generateMealPlan = (userProfile, excludedItems = []) => {
   const lunchItems = availableItems.filter(item => item.category === 'lunch');
   const dinnerItems = availableItems.filter(item => item.category === 'dinner');
   
-  // Simple algorithm: pick random items that fit within calorie goals
+  // Simple algorithm: pick up to 2 items per meal that fit within calorie goals
   const caloriesPerMeal = Math.floor(targets.targetCalories / 3);
   
   const selectedMeals = {
-    breakfast: selectOptimalMeal(breakfastItems, caloriesPerMeal, targets),
-    lunch: selectOptimalMeal(lunchItems, caloriesPerMeal, targets),
-    dinner: selectOptimalMeal(dinnerItems, caloriesPerMeal, targets),
+    breakfast: selectMealItems(breakfastItems, caloriesPerMeal, targets),
+    lunch: selectMealItems(lunchItems, caloriesPerMeal, targets),
+    dinner: selectMealItems(dinnerItems, caloriesPerMeal, targets),
   };
   
   // Calculate total nutrition
@@ -144,34 +144,61 @@ const computeNutritionTargets = (profile) => {
   };
 };
 
-const selectOptimalMeal = (items, targetCalories, targets) => {
-  if (items.length === 0) return null;
+const selectMealItems = (items, targetCalories, targets) => {
+  if (items.length === 0) return [];
   
-  // Sort by how close calories are to target and protein content
+  // Score items by proximity to target meal calories and protein density
   const scored = items.map(item => {
     const calorieScore = 1 - Math.abs(item.calories - targetCalories) / targetCalories;
-    const proteinScore = item.protein / 50; // Normalize protein score
+    const proteinScore = item.protein / 50;
     const score = calorieScore * 0.6 + proteinScore * 0.4;
     return { ...item, score };
   });
   
   scored.sort((a, b) => b.score - a.score);
   
-  // Add some randomness to avoid always picking the same items
-  const topItems = scored.slice(0, Math.min(3, scored.length));
-  const randomIndex = Math.floor(Math.random() * topItems.length);
+  // Greedy pick up to 2 items without wildly exceeding targetCalories
+  const picked = [];
+  let total = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+  for (let i = 0; i < scored.length && picked.length < 2; i++) {
+    const candidate = scored[i];
+    const projectedCalories = total.calories + candidate.calories;
+    // Allow slight overshoot to find reasonable combos
+    if (projectedCalories <= targetCalories * 1.15 || picked.length === 0) {
+      picked.push(candidate);
+      total.calories += candidate.calories;
+      total.protein += candidate.protein;
+      total.carbs += candidate.carbs;
+      total.fat += candidate.fat;
+    }
+  }
   
-  return topItems[randomIndex];
+  // Fallback to top-1 if nothing picked (shouldn't happen)
+  if (picked.length === 0 && scored.length > 0) return [scored[0]];
+  
+  // Strip score before returning
+  return picked.map(({ score, ...rest }) => rest);
 };
 
 const calculateTotalNutrition = (meals) => {
   return meals.reduce((total, meal) => {
     if (!meal) return total;
+    // meal can be an array of items or a single item
+    const items = Array.isArray(meal) ? meal : [meal];
+    const sumForMeal = items.reduce((acc, item) => {
+      if (!item) return acc;
+      acc.calories += item.calories || 0;
+      acc.protein += item.protein || 0;
+      acc.carbs += item.carbs || 0;
+      acc.fat += item.fat || 0;
+      return acc;
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
     return {
-      calories: total.calories + meal.calories,
-      protein: total.protein + meal.protein,
-      carbs: total.carbs + meal.carbs,
-      fat: total.fat + meal.fat,
+      calories: total.calories + sumForMeal.calories,
+      protein: total.protein + sumForMeal.protein,
+      carbs: total.carbs + sumForMeal.carbs,
+      fat: total.fat + sumForMeal.fat,
     };
   }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
 };
@@ -187,7 +214,8 @@ const calculateAdherenceScore = (actual, targets) => {
 
 // Generate alternative meal for swapping
 export const generateAlternativeMeal = (currentMeal, userProfile, mealType) => {
-  const excludedItems = currentMeal ? [currentMeal.id] : [];
+  const currentItems = Array.isArray(currentMeal) ? currentMeal : (currentMeal ? [currentMeal] : []);
+  const excludedItems = currentItems.map(i => i.id);
   const fullPlan = generateMealPlan(userProfile, excludedItems);
   return fullPlan.meals[mealType];
 };

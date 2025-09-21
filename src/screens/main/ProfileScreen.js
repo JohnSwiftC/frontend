@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors } from '../../constants/Colors';
 import { storage } from '../../utils/AsyncStorage';
@@ -130,12 +129,9 @@ export default function ProfileScreen({ navigation }) {
   const renderTargetsBlock = () => {
     if (!targets) return null;
     return (
-      <View style={styles.targetsContainer}>
+      <View style={styles.targetsSection}>
         <Text style={styles.targetsTitle}>My Daily Nutrients</Text>
-        <LinearGradient
-          colors={[Colors.primary, Colors.primaryDark]}
-          style={styles.targetsGradient}
-        >
+        <View style={styles.targetsContainer}>
           <View style={styles.targetItem}>
             <Text style={styles.targetLabel}>Calories</Text>
             <Text style={styles.targetValue}>{targets.targetCalories}</Text>
@@ -155,7 +151,7 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.targetLabel}>Fat</Text>
             <Text style={styles.targetValue}>{targets.targetFat}g</Text>
           </View>
-        </LinearGradient>
+        </View>
       </View>
     );
   };
@@ -303,9 +299,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
   },
-  targetsContainer: {
+  targetsSection: {
     paddingHorizontal: 20,
     paddingBottom: 12,
+  },
+  targetsContainer: {
+    backgroundColor: Colors.success,
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   targetsTitle: {
     fontSize: 18,
@@ -313,14 +318,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 8,
     textAlign: 'left',
-  },
-  targetsGradient: {
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   targetItem: {
     flex: 1,

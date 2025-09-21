@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,18 @@ import { Colors } from '../constants/Colors';
 import MealCard from './MealCard';
 
 export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativeDayPrefix, currentDate, onSwapMeal, swappingMeal, getDiningCourtInfo }) {
+  const [expandedMeals, setExpandedMeals] = useState({
+    breakfast: true,
+    lunch: true,
+    dinner: true,
+  });
+
+  const toggleMealExpansion = (mealType) => {
+    setExpandedMeals(prev => ({
+      ...prev,
+      [mealType]: !prev[mealType]
+    }));
+  };
   
   // helper: returns "Today", "Tomorrow" or a short formatted date like "Mon, Sep 22"
   const formatDisplayDate = (date) => {
@@ -69,21 +81,52 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
     }
   };
 
-  // render a meal row with a left timeline column (vertical line + circle) and the meal content to the right
-  const renderMealRow = (mealType, meal) => {
+  // render individual meal blocks with expand/collapse functionality
+  const renderMealBlock = (mealType, meal) => {
+    const mealColor = getMealTypeColor(mealType);
+    const mealIcon = iconNameForMeal(mealType);
+    const isExpanded = expandedMeals[mealType];
+    
     return (
-      <View key={mealType} style={styles.mealRow}>
-        <View style={styles.timelineColumn}>
-          <View style={styles.timelineLine} />
-          <View style={styles.timelineCircle}>
-            <Ionicons name={iconNameForMeal(mealType)} size={16} color={Colors.primary} />
+      <View key={mealType} style={styles.mealBlock}>
+        <TouchableOpacity 
+          style={styles.mealBlockHeader}
+          onPress={() => toggleMealExpansion(mealType)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.mealHeaderLeft}>
+            <View style={[styles.mealIconContainer, { backgroundColor: mealColor + '15' }]}>
+              <Ionicons name={mealIcon} size={20} color={mealColor} />
+            </View>
+            <Text style={styles.mealBlockTitle}>
+              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+            </Text>
           </View>
-        </View>
-        <View style={styles.mealContent}>
-          <MealCard mealType={mealType} meal={meal} onSwapMeal={onSwapMeal} swappingMeal={swappingMeal} getDiningCourtInfo={getDiningCourtInfo} />
-        </View>
+          <View style={styles.expandButton}>
+            <Ionicons 
+              name={isExpanded ? 'chevron-up' : 'chevron-down'} 
+              size={20} 
+              color={Colors.textSecondary} 
+            />
+          </View>
+        </TouchableOpacity>
+        {isExpanded && (
+          <View style={styles.mealBlockContent}>
+            <MealCard mealType={mealType} meal={meal} onSwapMeal={onSwapMeal} swappingMeal={swappingMeal} getDiningCourtInfo={getDiningCourtInfo} />
+          </View>
+        )}
       </View>
     );
+  };
+
+  // helper function for meal colors
+  const getMealTypeColor = (mealType) => {
+    switch (mealType) {
+      case 'breakfast': return Colors.breakfast;
+      case 'lunch': return Colors.lunch;
+      case 'dinner': return Colors.dinner;
+      default: return Colors.primary;
+    }
   };
 
   if (!plan) {
@@ -120,22 +163,19 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
       {/* modern nutrition summary (no "Daily Nutrition" title) */}
       {renderNutritionSummary()}
       <View style={styles.mealsContainer}>
-        {renderMealRow('breakfast', plan.meals.breakfast)}
-        {renderMealRow('lunch', plan.meals.lunch)}
-        {renderMealRow('dinner', plan.meals.dinner)}
+        {renderMealBlock('breakfast', plan.meals.breakfast)}
+        {renderMealBlock('lunch', plan.meals.lunch)}
+        {renderMealBlock('dinner', plan.meals.dinner)}
       </View>
       <TouchableOpacity
         style={styles.regenerateButton}
         onPress={onGenerate}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={[Colors.secondary, Colors.secondaryDark]}
-          style={styles.regenerateGradient}
-        >
+        <View style={styles.regenerateButtonContent}>
           <Ionicons name="refresh-circle" size={24} color={Colors.textLight} />
           <Text style={styles.regenerateText}>Generate New Plan</Text>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     </ScrollView>
     </>
@@ -145,7 +185,7 @@ export default function DayPlanView({ plan, onGenerate, isCurrentDay, getRelativ
 const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingBottom: 16,
   },
 
   noDataContainer: {
@@ -192,88 +232,122 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   mealsContainer: {
-    marginBottom: 24,
+    marginBottom: 4,
+    marginHorizontal: 0, // no extra margin, same width as nutrition
   },
 
-  // new meal row + timeline styles
-  mealRow: {
+  // clean meal block styles
+  mealBlock: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    marginBottom: 16,
+    marginHorizontal: 0, // no horizontal margin for full width
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  mealBlockHeader: {
     flexDirection: 'row',
-    alignItems: 'stretch',
-    marginVertical: 8,
-  },
-  timelineColumn: {
-    width: 56,                 // space reserved for line + circle
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    position: 'relative',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  timelineLine: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '50%',
-    width: 2,
-    backgroundColor: Colors.border,
-    transform: [{ translateX: -1 }],
+  mealHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  timelineCircle: {
+  expandButton: {
+    padding: 4,
+    marginLeft: 12,
+  },
+  mealIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.cardBackground,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    zIndex: 2,
-    // center the circle horizontally on the timeline line
-    position: 'relative',
-    marginTop: 8,
+    alignItems: 'center',
+    marginRight: 12,
   },
-  mealContent: {
-    flex: 1,
-    paddingLeft: 6, // small gap between timeline column and meal content
+  mealBlockTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  mealBlockContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
   },
 
-  // modern nutrition styles (boxes removed; numbers emphasized)
+  // modern nutrition styles with proper sizing and width matching meals
   nutritionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around', // spread items evenly
-    marginVertical: 12,
+    justifyContent: 'space-around',
+    marginVertical: 8,
+    marginHorizontal: 0, // same as meals for consistent width
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   nutrientCard: {
     flex: 1,
-    backgroundColor: 'transparent', // no box
-    borderRadius: 0,                 // remove rounding
-    paddingVertical: 6,              // tighter padding
-    paddingHorizontal: 6,
     alignItems: 'center',
-    marginHorizontal: 2,
-    // removed shadow/elevation to eliminate box appearance
+    marginHorizontal: 4,
   },
   nutrientCategory: {
     fontSize: 12,
     color: Colors.textSecondary,
-    marginBottom: 6,
+    marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontWeight: '600',
   },
   nutrientValue: {
-    fontSize: 36,        // larger number
-    fontWeight: '900',   // very bold
+    fontSize: 28,        // reduced from 36
+    fontWeight: '800',   // reduced from 900
     color: Colors.text,
   },
   nutrientGoal: {
-    fontSize: 12,
+    fontSize: 13,        // reduced from 12
     color: Colors.textSecondary,
+    fontWeight: '500',
   },
 
   regenerateButton: {
     borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 8,
+    backgroundColor: Colors.primary,
+    marginTop: 4,
+    marginHorizontal: 20,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  regenerateGradient: {
+  regenerateButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -287,18 +361,26 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   dateHeader: {
-    fontSize: 22,           // increased for better prominence
+    fontSize: 18,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: 8,
-    marginTop: 0,
+    marginTop: 4,
     textAlign: 'center',
     alignSelf: 'center',
-    backgroundColor: Colors.cardBackground,
-    width: '100%',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
+    backgroundColor: Colors.surface,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
     borderColor: Colors.border,
-    
   },
 });

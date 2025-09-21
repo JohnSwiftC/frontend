@@ -172,8 +172,16 @@ export default function TodaysPlanScreen() {
           showsPagination={false}
           showsButtons={true}
           buttonWrapperStyle={styles.swiperButtonsTop}
-          nextButton={<Ionicons name="chevron-forward" size={32} color="black" />}
-          prevButton={<Ionicons name="chevron-back" size={32} color="black" />}
+          nextButton={
+            <View style={styles.dateNavButton}>
+              <Ionicons name="chevron-forward" size={22} color={Colors.primary} />
+            </View>
+          }
+          prevButton={
+            <View style={styles.dateNavButton}>
+              <Ionicons name="chevron-back" size={22} color={Colors.primary} />
+            </View>
+          }
           onIndexChanged={onIndexChanged}
         >
           {dates.map((date, index) => {
@@ -222,15 +230,16 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 20,
-    paddingBottom: 24,
-    alignItems: 'center', // center content horizontally
+    paddingBottom: 8,
+    paddingHorizontal: 20,
+    alignItems: 'flex-start', // align content to left
   },
   greeting: {
     fontSize: 32,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: 4,
-    textAlign: 'center', // ensure text is centered
+    textAlign: 'left', // align text to left
   },
 
   slide: {
@@ -238,14 +247,32 @@ const styles = StyleSheet.create({
   },
   swiperButtonsTop: {
     position: 'absolute',
-    top: -10,
+    top: 10,
     left: 0,
     right: 0,
     height: 48,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     backgroundColor: 'transparent',
+  },
+  dateNavButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 });

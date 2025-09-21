@@ -9,7 +9,6 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '../../constants/Colors';
@@ -21,7 +20,6 @@ export default function BrowseMenusScreen() {
   const [selectedCategory, setSelectedCategory] = useState('breakfast');
   const [selectedDiningCourt, setSelectedDiningCourt] = useState('all');
   const [searchResults, setSearchResults] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     performSearch();
@@ -144,10 +142,7 @@ export default function BrowseMenusScreen() {
 
     return (
       <TouchableOpacity style={styles.mealItem} activeOpacity={0.7}>
-        <LinearGradient
-          colors={[categoryColor + '10', Colors.surface]}
-          style={styles.mealItemGradient}
-        >
+        <View style={styles.mealItemContainer}>
           <View style={styles.mealItemHeader}>
             <View style={styles.mealItemInfo}>
               <Text style={styles.mealItemName}>{item.name}</Text>
@@ -194,7 +189,7 @@ export default function BrowseMenusScreen() {
               ))}
             </View>
           )}
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -203,7 +198,6 @@ export default function BrowseMenusScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Browse Menus</Text>
-        <Text style={styles.subtitle}>Explore today's dining options</Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -229,24 +223,6 @@ export default function BrowseMenusScreen() {
 
       {renderCategoryFilter()}
       {renderDiningCourtFilter()}
-
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsCount}>
-          {searchResults.length} meal{searchResults.length !== 1 ? 's' : ''} found
-        </Text>
-        <TouchableOpacity
-          style={styles.filterToggle}
-          onPress={() => setShowFilters(!showFilters)}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name={showFilters ? "filter" : "filter-outline"} 
-            size={20} 
-            color={Colors.primary} 
-          />
-          <Text style={styles.filterToggleText}>Filters</Text>
-        </TouchableOpacity>
-      </View>
 
       <FlatList
         data={searchResults}
@@ -283,10 +259,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -401,29 +373,6 @@ const styles = StyleSheet.create({
   selectedDiningCourtText: {
     color: Colors.textLight,
   },
-  resultsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    height: 40, // Fixed height to prevent shifts
-  },
-  resultsCount: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  filterToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  filterToggleText: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '500',
-    marginLeft: 4,
-  },
   mealsList: {
     paddingHorizontal: 20,
     paddingBottom: 32,
@@ -438,7 +387,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  mealItemGradient: {
+  mealItemContainer: {
+    backgroundColor: Colors.surface,
     padding: 16,
   },
   mealItemHeader: {
